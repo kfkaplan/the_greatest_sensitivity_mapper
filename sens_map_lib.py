@@ -77,7 +77,7 @@ class GREAT_array:
 	def raster(self, skyobj, x=0., y=0., nx=1, ny=1, dx=1.0, dy=1.0, time=1.0, cycles=1, array_angle=0., map_angle=0.):
 		self.rotate(array_angle) #Set rotation angle
 		map_y, map_x = np.mgrid[0:ny,0:nx] #Generate map coordinates
-		map_x = map_x * dx
+		map_x = map_x * dx #scale map coordinates to proper step size
 		map_y = map_y * dy
 		cos_map_angle = np.cos(np.radians(map_angle)) #Rotate map coordiunates by map angle (using a rotation matrix) and add starting position to map coordinates
 		sin_map_angle = np.sin(np.radians(map_angle))
@@ -85,15 +85,29 @@ class GREAT_array:
 		rotated_map_y = y + (-sin_map_angle*map_x + cos_map_angle*map_y)
 		for ix in range(nx): #Loop through each step in the map
 			for iy in range(ny):
-			# 	print('x=', map_x[iy,ix])
-			# 	print('y=', map_y[iy,ix])
 				self.position(rotated_map_x[iy,ix], rotated_map_y[iy,ix]) #Set array position at this step
 				self.paint(skyobj, time=time, cycles=cycles) #Paint the current step to the sky object
 				
 
 #Child class to store array profile for the LFA
 class LFA_array(GREAT_array):
-	def __init__(self, fwhm=15.85, amplitude=1.0, r=31.7, angle=0.):
+	def __init__(self, fwhm=14.1, amplitude=1.0, r=31.8, angle=0.):
+		stddev = fwhm / (2.0 * np.sqrt(np.log(2.0)))#Convert FWHM to stddev
+		#Defines the profile for each pixel in a hexagon pattern, relative pixel positions in a hexagon are from https://www.quora.com/How-can-you-find-the-coordinates-in-a-hexagon
+		pix0 =  models.Gaussian2D(amplitude=amplitude, x_mean=0.0, y_mean=0.0, x_stddev=stddev, y_stddev=stddev)
+		pix1 =  models.Gaussian2D(amplitude=amplitude, x_mean=r/2.0, y_mean=-np.sqrt(3)*r/2.0, x_stddev=stddev, y_stddev=stddev)
+		pix2 =  models.Gaussian2D(amplitude=amplitude, x_mean=r, y_mean=0.0, x_stddev=stddev, y_stddev=stddev)
+		pix3 =  models.Gaussian2D(amplitude=amplitude, x_mean=r/2.0, y_mean=np.sqrt(3)*r/2.0, x_stddev=stddev, y_stddev=stddev)
+		pix4 =  models.Gaussian2D(amplitude=amplitude, x_mean=-r/2.0, y_mean=np.sqrt(3)*r/2.0, x_stddev=stddev, y_stddev=stddev)
+		pix5 =  models.Gaussian2D(amplitude=amplitude, x_mean=-r, y_mean=0.0, x_stddev=stddev, y_stddev=stddev)
+		pix6 =  models.Gaussian2D(amplitude=amplitude, x_mean=-r/2.0, y_mean=-np.sqrt(3)*r/2.0, x_stddev=stddev, y_stddev=stddev)
+		self.array_profile = pix0 + pix1 + pix2 + pix3 + pix4 + pix5 + pix6 #Generate an astropy compound model of the array profile
+		self.angle = 0.
+		self.rotate(angle)		
+		
+#Child class to store array profile for the HFA
+class HFA_array(GREAT_array):
+	def __init__(self, fwhm=6.3, amplitude=1.0, r=13.6, angle=0.):
 		stddev = fwhm / (2.0 * np.sqrt(np.log(2.0)))#Convert FWHM to stddev
 		#Defines the profile for each pixel in a hexagon pattern, relative pixel positions in a hexagon are from https://www.quora.com/How-can-you-find-the-coordinates-in-a-hexagon
 		pix0 =  models.Gaussian2D(amplitude=amplitude, x_mean=0.0, y_mean=0.0, x_stddev=stddev, y_stddev=stddev)
