@@ -16,8 +16,8 @@ class sky:
 		data = np.zeros([nx, ny])
 		y, x = np.mgrid[0:nx,0:ny] * plate_scale
 		self.data = data #This is the actual 2D array that stores the model array profiles painted onto the sky
-		self.x = x[:,::-1] #* plate_scale #2D x coords (note the x coordinates inncrese to the left since they are RA)
-		self.y = y #* plate_scale #2D y coords
+		self.x = x[:,::-1] #2D x coords (note the x coordinates inncrese to the left since they are RA)
+		self.y = y #2D y coords
 		self.extent = [np.max(x), np.min(x), np.min(y), np.max(y)]  #Gives the x and y coordinate extents for proper plotting using imshow
 	def paint(self, array_obj, time=1.0): #Paint a single instance of an array profile onto the sky (e.g. a single pointing)
 		self.data += array_obj.array_profile(self.x, self.y) * time
@@ -50,7 +50,7 @@ class GREAT_array:
 		zeroth_pixel = self.array_profile[0] #Grab central pixel
 		zero_point = np.array([zeroth_pixel.x_mean, zeroth_pixel.y_mean]).T #Store zero point of central pixel as a 
 		c, s = np.cos(np.radians(angle)), np.sin(np.radians(angle)) #Construct rotation matrix
-		rot_matrix = np.array([[c, -s], [s, c]]).T
+		rot_matrix = np.array([[c, s], [-s, c]]).T
 		for pixel in self.array_profile:
 			position_vector = np.array([pixel.x_mean.value, pixel.y_mean.value]).T - zero_point #Cast pixel centroid position as a vector relative to the center
 			position_vector = position_vector.dot(rot_matrix) #Apply rotation matrix
