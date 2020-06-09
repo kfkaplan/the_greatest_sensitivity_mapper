@@ -8,10 +8,44 @@ import numpy as np
 from astropy.io import fits
 from astropy.modeling import models, fitting
 
+#import timeit #used for profiling code
 
 
+#Honeycomb pattern from Randolf Klein as a vector with [x,y], The unit is one fifth of the distance between the pixels in each array. 
+#That distance is 13.8” for the HFA and 31.7” for the LFA. Thus, to get to arc seconds multiply the offsets with 2.76” or 6.34” for the
+#HFA or LFA, respectively. In the y-direction, you see multiples of 0.86603. That is actually sqrt(3.)/2.
+honeycomb_pattern = np.array([ 
+	[0.00000, 0.0000], #1
+	[-1.00000, 0.00000], #2
+	[-0.50000, 0.86603], #3
+	[0.50000, 0.86603], #4
+	[1.00000, 0.00000], #5
+	[0.50000, -0.86603], #6
+	[-0.50000, -0.86603], #7
+	[-1.50000, -0.86603], #8
+	[-2.00000, 0.00000], #9
+	[-1.50000, 0.86603], #10
+	[-2.00000, 1.73205], #11
+	[-1.00000, 1.73205], #12
+	[-0.50000, 2.59808], #13
+	[-0.00000, 1.73205], #14
+	[1.00000, 1.73205], #15
+	[1.50000, 0.86603], #16
+	[2.50000, 0.86603], #17
+	[2.00000, 0.00000], #18
+	[2.50000, -0.86603], #19
+	[1.50000, -0.86603], #20
+	[1.00000, -1.73205], #21
+	[0.00000, -1.73205], #22
+	[-0.50000, -2.59808], #23
+	[-1.00000, -1.73205], #24
+	[-2.00000, -1.73205], #25
+	])
 
 
+#Find nearest value in an array
+def find_nearest(arr, value):
+    return (np.abs(arr - value)).argmin()
 
 #Class that stores the 2D array representing the sky and it's associated coordinate system
 class sky:
@@ -23,11 +57,17 @@ class sky:
 		self.data = data #This is the actual 2D array that stores the model array profiles painted onto the sky
 		self.x = x[:,::-1] #2D x coords (note the x coordinates inncrese to the left since they are RA)
 		self.y = y #2D y coords
+		self.x_1d = self.x[0,:] #Grab 1D arrays for x and y coordinates
+		self.y_1d = self.y[:,0]
 		self.extent = [np.max(x), np.min(x), np.min(y), np.max(y)]  #Gives the x and y coordinate extents for proper plotting using imshow
-	def paint(self, array_obj, time=1.0): #Paint a single instance of an array profile onto the sky (e.g. a single pointing)
-		self.data += array_obj.array_profile(self.x, self.y) * time
 	def clear(self): #Erase everything on the grid
 		self.data[:] = 0.
+	def get_range_indicies(self, xmin, xmax, ymin, ymax): #Returns the index numbers for a range of (xmin, xmax, ymin, ymax)
+		ixmin = find_nearest(xmin, self.x_1d)
+		ixmax = find_nearest(xmax, self.x_1d)
+		iymin = find_nearest(ymin, self.y_1d)
+		iymax = find_nearest(ymax, self.y_1d)
+		return ixmin, ixmax, iymin, iymax
 
 
 
@@ -38,11 +78,17 @@ class GREAT_array:
 	def __init__(self):
 		self.array_profile = None #Holder for array profile
 		self.angle = 0.
+		self.type = ''
+		self.range = 100.0 #Maximum range in arcsec +/- x and y to paint, this is for optimization
+		self.x = 0.
+		self.y = 0.
 	def position(self, x, y): #Move center of array to (x,y)
 		self.reset_position() #First zero position
 		for pixel in self.array_profile:
 			pixel.x_mean = pixel.x_mean + x
 			pixel.y_mean = pixel.y_mean + y
+		self.x = x
+		self.y = y
 	def reset_position(self): #Rezeros position around the 0th pixel
 		zeroth_pixel = self.array_profile[0]
 		dx = zeroth_pixel.x_mean.value
@@ -68,8 +114,17 @@ class GREAT_array:
 		self.angle += angle #Store overall angle of rotation
 	def reset_array_rotation(self): #Rotate back to an angle of zero
 		self.set_array_rotation(-self.angle)
+		self.angle = 0.
 	def paint(self, skyobj, time=1.0, cycles=1): #Paint a single instance of the array profile onto a sky object, this is the base for all observation types including single pointing and maps
-		skyobj.data += self.array_profile(skyobj.x, skyobj.y) * time * cycles
+		sky_xmax, sky_xmin, sky_ymin, sky_ymax = skyobj.extent #Grab limits of the sky coordinates
+		paint_xmin, paint_xmax = self.x - self.range, self.x + self.range #Calculate coordinate range to paint (this is for optimization)
+		paint_ymin, paint_ymax = self.y - self.range, self.y + self.range
+		if paint_xmin < sky_xmin: paint_xmin = sky_xmin #Bring coordinate ranges within bounds if they fall outside of sky object's bounds
+		if paint_ymin < sky_ymin: paint_ymin = sky_ymin
+		if paint_xmax > sky_xmax: paint_xmax = sky_xmax
+		if paint_ymax > sky_ymax: paint_ymax = sky_ymax
+		ix2, ix1, iy1, iy2 = skyobj.get_range_indicies(paint_xmin, paint_xmax, paint_ymin, paint_ymax)  #Grab the indicies for the pixels on the sky over witch to paint onto (NOTE: x axis is inverted because RA increases to the left)
+		skyobj.data[iy1:iy2, ix1:ix2] += self.array_profile(skyobj.x[iy1:iy2, ix1:ix2], skyobj.y[iy1:iy2, ix1:ix2]) * time * cycles #Paint pattern onto the sky
 	def single_point(self, skyobj, x=0., y=0., time=1.0, array_angle=0., cycles=1): #Paint a single point observation onto the sky object	
 		self.rotate(array_angle) #Set rotation angle
 		self.position(x, y) #Set central position for the single pointing
@@ -87,6 +142,19 @@ class GREAT_array:
 			for iy in range(ny):
 				self.position(rotated_map_x[iy,ix], rotated_map_y[iy,ix]) #Set array position at this step
 				self.paint(skyobj, time=time, cycles=cycles) #Paint the current step to the sky object
+	def honeycomb(self, skyobj, x=0., y=0., time=1.0, cycles=1, array_angle=0., map_angle=0.):
+		self.rotate(array_angle) #Set rotation angle
+		if self.type == 'LFA': #Set multiplier for honeycomb offsets based on which array you are using
+			honeycomb_multiplier = 6.34
+		elif self.type == 'HFA':
+			honeycomb_multiplier = 2.76
+		c, s = np.cos(np.radians(map_angle)), np.sin(np.radians(map_angle)) #Construct rotation matrix
+		rot_matrix = np.array([[c, s], [-s, c]]).T
+		honeycomb_map_positions = np.array([x,y]).T + (honeycomb_pattern*honeycomb_multiplier).dot(rot_matrix) #Construct a vector of honeycomb positions and dot it with the rotation matrix
+		for honeycomb_map_position in honeycomb_map_positions:
+			self.position(honeycomb_map_position[0], honeycomb_map_position[1]) #Set array position at this step
+			self.paint(skyobj, time=time, cycles=cycles) #Paint the current step to the sky object			
+
 
 
 #Child class to store array profile for the LFA
@@ -104,6 +172,10 @@ class LFA_array(GREAT_array):
 		self.array_profile = pix0 + pix1 + pix2 + pix3 + pix4 + pix5 + pix6 #Generate an astropy compound model of the array profile
 		self.angle = 0.
 		self.rotate(angle)		
+		self.type = 'LFA'
+		self.x = 0.
+		self.y = 0.
+		self.range = 2.0 * r #Maximum range in arcsec +/- x and y to paint, this is for optimization
 		
 #Child class to store array profile for the HFA
 class HFA_array(GREAT_array):
@@ -120,4 +192,8 @@ class HFA_array(GREAT_array):
 		self.array_profile = pix0 + pix1 + pix2 + pix3 + pix4 + pix5 + pix6 #Generate an astropy compound model of the array profile
 		self.angle = 0.
 		self.rotate(angle)		
-		
+		self.type = 'HFA'
+		self.x = 0.
+		self.y = 0.
+		self.range = 2.0 * r #Maximum range in arcsec +/- x and y to paint, this is for optimization
+
