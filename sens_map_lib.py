@@ -74,7 +74,7 @@ class GREAT_array:
 		self.rotate(array_angle) #Set rotation angle
 		self.position(x, y) #Set central position for the single pointing
 		self.paint(skyobj, time=time, cycles=cycles) #Paint the single pointing to the sky object
-	def raster(self, skyobj, x=0., y=0., nx=1, ny=1, dx=1.0, dy=1.0, time=1.0, cycles=1, array_angle=0., map_angle=0.):
+	def map(self, skyobj, x=0., y=0., nx=1, ny=1, dx=1.0, dy=1.0, time=1.0, cycles=1, array_angle=0., map_angle=0.): #Paint a raster or OFT map observation onto the sky object
 		self.rotate(array_angle) #Set rotation angle
 		map_y, map_x = np.mgrid[0:ny,0:nx] #Generate map coordinates
 		map_x = map_x * dx #scale map coordinates to proper step size
@@ -87,7 +87,7 @@ class GREAT_array:
 			for iy in range(ny):
 				self.position(rotated_map_x[iy,ix], rotated_map_y[iy,ix]) #Set array position at this step
 				self.paint(skyobj, time=time, cycles=cycles) #Paint the current step to the sky object
-				
+
 
 #Child class to store array profile for the LFA
 class LFA_array(GREAT_array):
