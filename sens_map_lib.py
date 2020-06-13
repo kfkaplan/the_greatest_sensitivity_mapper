@@ -7,6 +7,8 @@
 import numpy as np
 from astropy.io import fits
 from astropy.modeling import models, fitting
+from astropy.coordinates import SkyCoord
+import xmltodict #For reading in AORs
 
 #import timeit #used for profiling code
 
@@ -43,23 +45,107 @@ honeycomb_pattern = np.array([
 	])
 
 
+
 #Find nearest value in an array
 def find_nearest(arr, value):
     return (np.abs(arr - value)).argmin()
 
+
+#Reads in a .aor file and returns aor objects (see aor class below) for each aor in the file
+def open_aors(filename):
+	#The following code from Ed Chambers' aor_inpar_translator.py was plundered on the high seas by the nortorious software pirate knwon as Kyle Kaplan
+	#who then proceeded to modify it without approval of the Gov'ner or the Crown™.
+	aor_file = open(filename, 'rb') #Open .aor file
+	xml_dict = xmltodict.parse(aor_file) #Parse the xml from the .aor file into python dictionaries so we can grab information out of them
+	aor_file.close() #close .aor file
+	aor_dict_list = []
+	if type(xml_dict['AORs']['list']['vector']['Request']) == list: #multiple aors in .aor file, 
+		for aor_dict in xml_dict['AORs']['list']['vector']['Request']:
+			aor_dict_list.append(aor_dict)
+	else:
+		# one aor in .aor file
+		aor_dict = xml_dict['AORs']['list']['vector']['Request']
+		aor_dict_list.append(aor_dict)
+	aor_list = []
+	for aor_dict in aor_dict_list: #Loop through each aor python dictionary and create an aor object that stores the relavent information
+		aor_list.append(aor(aor_dict))
+	return aor_list
+
+
+
+
+#Class that the relavent array into and information necessory to paint an array onto the sky
+class aor:
+	def __init__(self, aor_dict): #Contstruct aor object
+		instr_data = aor_dict['instrument']['data']
+		self.array1 = HFA_array()
+		if instr_data['InstrumentSpectralElement2'] == 'GRE_LFA':
+			self.array2 = LFA_array()
+		# else: #4GREAT
+		# 	self.array2 = FOURGREAT_array()
+		self.map_type = aor_dict['instrument']['@class'].split('.')[-1] #'GREAT_SP', 'GREAT_Raster', 'GREAT_OTF', OR 'GREAT_ON_THE_FLY_HONEYCOMB_MAP'
+		self.cycles = float(instr_data['Repeat'])
+		self.array_angle = float(instr_data['ArrayRotationAngle'])
+		if self.map_type == 'GREAT_SP':
+			self.time = 0.5 * float(instr_data['TotalTime'])
+			self.x = float(instr_data['TargetOffsetRA'])
+			self.y = float(instr_data['TargetOffsetDec'])
+			#STUFF
+		elif self.map_type == 'GREAT_Raster' or self.map_type == 'GREAT_OTF':
+			self.dx = float(instr_data['MapStepSizeRA'])
+			self.dy = float(instr_data['MapStepSizeDec'])
+			self.nx = int(instr_data['NumStepRA'])
+			self.ny = int(instr_data['NumStepDec'])
+			self.time = float(instr_data['TimePerPoint'])
+			self.map_angle = float(instr_data['MapRotationAngle'])
+			self.x = float(instr_data['MapCenterOffsetRA'])
+			self.y = float(instr_data['MapCenterOffsetDec'])
+			#STUFF
+		elif self.map_type == 'GREAT_ON_THE_FLY_HONEYCOMB_MAP':
+			self.time = float(instr_data['TimePerPoint'])
+			self.map_angle = float(instr_data['ArrayRotationAngle'])
+			self.x = float(instr_data['TargetOffsetRA'])
+			self.y = float(instr_data['TargetOffsetDec'])
+		else:
+			print('ERROR: '+self.map_type+' is not a valid map type to paint in the sky.')
+	def paint(self, skyobj, which_array): #Paint AOR onto sky object with specified array ("HFA", "LFA", or "4GREAT")
+		#Determine which array to use
+		if which_array.upper() == 'HFA':
+			array_obj = self.array1
+		elif which_array.upper() == 'LFA' or which_array.upper() == '4GREAT' or which_array.upper() == '4G':
+			array_obj = self.array2
+		else:
+			print('ERROR: '+which_array+' is not a valid array. Please set to be either HFA, LFA, or 4GREAT')
+		#Determine the map type then paint the array
+		if self.map_type == 'GREAT_SP':
+			array_obj.single_point(skyobj, x=self.x, y=self.y, time=self.time, array_angle=self.array_angle, cycles=self.cycles)
+		elif self.map_type == 'GREAT_Raster' or self.map_type == 'GREAT_OTF':
+			array_obj.map(skyobj, x=self.x, y=self.y, nx=self.nx, ny=self.ny, dx=self.dx, dy=self.dy, array_angle=self.array_angle, cycles=self.cycles, time=self.time)
+		elif self.map_type == 'GREAT_ON_THE_FLY_HONEYCOMB_MAP':
+			array_obj.honeycomb(skyobj, x=self.x, y=self.y, array_angle=self.array_angle, map_angle=self.map_angle, cycles=self.cycles, time=self.time)
+
+
+
 #Class that stores the 2D array representing the sky and it's associated coordinate system
 class sky:
-	def __init__(self, max_x, max_y, plate_scale):
-		nx = int(max_x/plate_scale)
-		ny = int(max_y/plate_scale)
+	def __init__(self, x_range, y_range, plate_scale):
+		if np.size(x_range) == 1:
+			x_range = [0.0, x_range]
+		if np.size(y_range) == 1:
+			y_range = [0.0, y_range]
+		nx = int((x_range[1]-x_range[0])/plate_scale)
+		ny = int((y_range[1]-y_range[0])/plate_scale)
 		data = np.zeros([nx, ny])
 		y, x = np.mgrid[0:nx,0:ny] * plate_scale
+		x += x_range[0]
+		y += y_range[0]
 		self.data = data #This is the actual 2D array that stores the model array profiles painted onto the sky
 		self.x = x[:,::-1] #2D x coords (note the x coordinates inncrese to the left since they are RA)
 		self.y = y #2D y coords
 		self.x_1d = self.x[0,:] #Grab 1D arrays for x and y coordinates
 		self.y_1d = self.y[:,0]
 		self.extent = [np.max(x), np.min(x), np.min(y), np.max(y)]  #Gives the x and y coordinate extents for proper plotting using imshow
+		#self.set_sky_coords(0.0, 0.0)
 	def clear(self): #Erase everything on the grid
 		self.data[:] = 0.
 	def get_range_indicies(self, xmin, xmax, ymin, ymax): #Returns the index numbers for a range of (xmin, xmax, ymin, ymax)
@@ -68,6 +154,8 @@ class sky:
 		iymin = find_nearest(ymin, self.y_1d)
 		iymax = find_nearest(ymax, self.y_1d)
 		return ixmin, ixmax, iymin, iymax
+	#def set_sky_coords(self, ra, dec): #Set the sky coordinates for the 0,0 point using astropy.coordinates SkyCoord
+	#	self.coords = SkyCoord(ra, dec, frame='icrs', unit ='arcsec')
 
 
 
@@ -196,4 +284,9 @@ class HFA_array(GREAT_array):
 		self.x = 0.
 		self.y = 0.
 		self.range = 2.0 * r #Maximum range in arcsec +/- x and y to paint, this is for optimization
+
+# #Child class to store array profile for 4GREAT
+# class FOURGREAT_array(GREAT_array):
+# 	def __init__(self):
+# 	#TO DO
 
