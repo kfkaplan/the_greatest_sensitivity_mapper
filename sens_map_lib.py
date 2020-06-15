@@ -5,6 +5,7 @@
 
 #Import python libraries 
 import numpy as np
+from matplotlib import pyplot
 from astropy.io import fits
 from astropy.modeling import models, fitting
 from astropy.coordinates import SkyCoord
@@ -154,6 +155,11 @@ class sky:
 		iymin = find_nearest(ymin, self.y_1d)
 		iymax = find_nearest(ymax, self.y_1d)
 		return ixmin, ixmax, iymin, iymax
+	def plot(self, **kwargs): #Generate an expsoure map plot
+		pyplot.imshow(self.data, origin='bottom', extent=self.extent, **kwargs)
+		pyplot.xlabel('Relative RA (arcsec)')
+		pyplot.ylabel('Relative Dec. (arcsec)')
+		pyplot.colorbar()
 	#def set_sky_coords(self, ra, dec): #Set the sky coordinates for the 0,0 point using astropy.coordinates SkyCoord
 	#	self.coords = SkyCoord(ra, dec, frame='icrs', unit ='arcsec')
 
