@@ -220,8 +220,8 @@ class GREAT_array:
 	def map(self, skyobj, x=0., y=0., nx=1, ny=1, dx=1.0, dy=1.0, time=1.0, cycles=1, array_angle=0., map_angle=0.): #Paint a raster or OFT map observation onto the sky object
 		self.rotate(array_angle) #Set rotation angle
 		map_y, map_x = np.mgrid[0:ny,0:nx] #Generate map coordinates
-		map_x = map_x * dx #scale map coordinates to proper step size
-		map_y = map_y * dy
+		map_x = (map_x - 0.5*(nx-1.0))*dx #Center map and scale map coordinates to the proper step size
+		map_y = (map_y - 0.5*(ny-1.0))*dy
 		cos_map_angle = np.cos(np.radians(map_angle)) #Rotate map coordiunates by map angle (using a rotation matrix) and add starting position to map coordinates
 		sin_map_angle = np.sin(np.radians(map_angle))
 		rotated_map_x = x + (cos_map_angle*map_x + sin_map_angle*map_y)
