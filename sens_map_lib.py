@@ -155,6 +155,8 @@ class sky:
 		self.x_1d = self.x[0,:] #Grab 1D arrays for x and y coordinates
 		self.y_1d = self.y[:,0]
 		self.extent = [np.max(x), np.min(x), np.min(y), np.max(y)]  #Gives the x and y coordinate extents for proper plotting using imshow
+		self.total_exptime = 0. #Store total cumulative exposure time which is incremented every time a map is added
+		self.pixel_area = plate_scale**2 #Area per pixel, used in calculating (exptime/arcsec^2)
 		#self.set_sky_coords(0.0, 0.0)
 	def clear(self): #Erase everything on the grid
 		self.data[:] = 0.
@@ -165,10 +167,13 @@ class sky:
 		iymax = find_nearest(ymax, self.y_1d)
 		return ixmin, ixmax, iymin, iymax
 	def plot(self, **kwargs): #Generate an expsoure map plot
+		self.normalize()
 		pyplot.imshow(self.data, origin='bottom', extent=self.extent, **kwargs)
 		pyplot.xlabel('Relative RA (arcsec)')
 		pyplot.ylabel('Relative Dec. (arcsec)')
-		pyplot.colorbar()
+		pyplot.colorbar(label='s arcsec$^{-2}$')
+	def normalize(self): #Normalize entire sky map by the total exposure time and the pixel size so the resulting values are in units of (exptime/arcsec^2)
+		self.data *= (self.total_exptime/self.pixel_area) / np.nansum(self.data)
 	#def set_sky_coords(self, ra, dec): #Set the sky coordinates for the 0,0 point using astropy.coordinates SkyCoord
 	#	self.coords = SkyCoord(ra, dec, frame='icrs', unit ='arcsec')
 
@@ -219,6 +224,7 @@ class GREAT_array:
 		self.set_array_rotation(-self.angle)
 		self.angle = 0.
 	def paint(self, skyobj, time=1.0, cycles=1): #Paint a single instance of the array profile onto a sky object, this is the base for all observation types including single pointing and maps
+		skyobj.total_exptime += time*cycles #Add exposure time from this to the total
 		sky_xmax, sky_xmin, sky_ymin, sky_ymax = skyobj.extent #Grab limits of the sky coordinates
 		paint_xmin, paint_xmax = self.x - self.range, self.x + self.range #Calculate coordinate range to paint (this is for optimization)
 		paint_ymin, paint_ymax = self.y - self.range, self.y + self.range
@@ -227,7 +233,7 @@ class GREAT_array:
 		if paint_xmax > sky_xmax: paint_xmax = sky_xmax
 		if paint_ymax > sky_ymax: paint_ymax = sky_ymax
 		ix2, ix1, iy1, iy2 = skyobj.get_range_indicies(paint_xmin, paint_xmax, paint_ymin, paint_ymax)  #Grab the indicies for the pixels on the sky over witch to paint onto (NOTE: x axis is inverted because RA increases to the left)
-		if np.size(self.array_profile) > 1: #If LFA or HFA ()
+		if np.size(self.array_profile) > 1: #If LFA or HFA
 			skyobj.data[iy1:iy2, ix1:ix2] += self.array_profile(skyobj.x[iy1:iy2, ix1:ix2], skyobj.y[iy1:iy2, ix1:ix2]) * time * cycles #Paint pattern onto the sky
 		else: #Else if 4GREAT
 			skyobj.data[iy1:iy2, ix1:ix2] += self.array_profile[0](skyobj.x[iy1:iy2, ix1:ix2], skyobj.y[iy1:iy2, ix1:ix2]) * time * cycles #Paint pattern onto the sky
