@@ -24,14 +24,14 @@
       <IsArchival>false</IsArchival>
       <MultiObservatoryProposal>NONE</MultiObservatoryProposal>
       <SpecialInstructions></SpecialInstructions>
-      <TotalObsDuration>4584.0</TotalObsDuration>
+      <TotalObsDuration>3444.0</TotalObsDuration>
       <SubmissionKey></SubmissionKey>
       <pdf></pdf>
       <teampdf></teampdf>
       <ObservationStatus></ObservationStatus>
       <RelatedProposals></RelatedProposals>
       <ResubmitProposal></ResubmitProposal>
-      <Investigator FirstName="" LastName="" Honorific="Dr." JobTitle="" Institution="" State="NONE" Street1="" City="" Postcode="" Phone="" Country="">
+      <Investigator FirstName="" LastName="" Honorific="Dr." JobTitle="" Institution="" State="NONE" Street1="" City="" Postcode="" Phone="" Country="United States">
         <DCSUserName></DCSUserName>
         <ContactEmail></ContactEmail>
         <Primary></Primary>
@@ -39,7 +39,7 @@
     </ProposalInfo>
     <list>
       <SofiaTargetFixedSingle>
-        <name>M 31</name>
+        <name>M31</name>
         <targetAttributes/>
         <locationAttributes/>
         <position>
@@ -210,7 +210,7 @@
       <Request>
         <title>GREAT_SP-0000</title>
         <target class="SofiaTargetFixedSingle">
-          <name>M 31</name>
+          <name>M31</name>
           <targetAttributes/>
           <locationAttributes/>
           <position>
@@ -377,7 +377,7 @@
           </guideStarList>
         </target>
         <est class="SofiaEstimates">
-          <duration>360.0</duration>
+          <duration>240.0</duration>
         </est>
         <instrument class="sspot.sofia.data.great.GREAT_SP">
           <data>
@@ -387,18 +387,18 @@
             <After1UTDate TimingType="Preferred"></After1UTDate>
             <SourceType>Point_Source</SourceType>
             <RequestedWVOverburden>Nominal</RequestedWVOverburden>
-            <Repeat>2</Repeat>
+            <Repeat>1</Repeat>
             <IsCalibrator>No</IsCalibrator>
             <aorID>_1</aorID>
             <Frequency5>2514.316705</Frequency5>
             <Frequency4>1267.01449</Frequency4>
-            <Frequency3>1900.5369</Frequency3>
+            <Frequency3>921.7997</Frequency3>
             <OffPosTrack>FFI</OffPosTrack>
             <TotalTime>60.0</TotalTime>
-            <Frequency2>1900.5369</Frequency2>
+            <Frequency2>576.26793</Frequency2>
             <IDString></IDString>
             <InstrumentSpectralElement1>GRE_HFA</InstrumentSpectralElement1>
-            <InstrumentSpectralElement2>GRE_LFA</InstrumentSpectralElement2>
+            <InstrumentSpectralElement2>GRE_4G</InstrumentSpectralElement2>
             <RepsPerLoad>4</RepsPerLoad>
             <ObsPlanConfig>DUAL-CHANNEL</ObsPlanConfig>
             <DesiredResolution>0.0</DesiredResolution>
@@ -406,7 +406,7 @@
             <IRFluxUnit>Jy</IRFluxUnit>
             <MinimumContiguousTime>0.0</MinimumContiguousTime>
             <ExpectedLinewidth>0.0</ExpectedLinewidth>
-            <PrimaryFrequency>HFA</PrimaryFrequency>
+            <PrimaryFrequency>4G_1</PrimaryFrequency>
             <VisibleWavelength>V</VisibleWavelength>
             <ChopAngleCoordinate>Sky</ChopAngleCoordinate>
             <NodType>Dual_Beam_Switch</NodType>
@@ -428,15 +428,14 @@
             <Frequency>4744.77749</Frequency>
           </data>
         </instrument>
-        <observerComment></observerComment>
         <status>new</status>
         <aorID>_1</aorID>
-        <overhead>240.0</overhead>
+        <overhead>180.0</overhead>
       </Request>
       <Request>
         <title>GREAT_Raster-0000</title>
         <target class="SofiaTargetFixedSingle">
-          <name>M 31</name>
+          <name>M31</name>
           <targetAttributes/>
           <locationAttributes/>
           <position>
@@ -622,10 +621,10 @@
             <Frequency3>921.7997</Frequency3>
             <OffPosTrack>FFI</OffPosTrack>
             <TotalTime>180</TotalTime>
-            <Frequency2>1900.5369</Frequency2>
+            <Frequency2>576.26793</Frequency2>
             <IDString></IDString>
             <InstrumentSpectralElement1>GRE_HFA</InstrumentSpectralElement1>
-            <InstrumentSpectralElement2>GRE_LFA</InstrumentSpectralElement2>
+            <InstrumentSpectralElement2>GRE_4G</InstrumentSpectralElement2>
             <MapCenterOffsetRA>0.0</MapCenterOffsetRA>
             <ObsPlanConfig>DUAL-CHANNEL</ObsPlanConfig>
             <DesiredResolution>0.0</DesiredResolution>
@@ -635,7 +634,7 @@
             <MinimumContiguousTime>0.0</MinimumContiguousTime>
             <TimePerPoint>10.0</TimePerPoint>
             <ExpectedLinewidth>0.0</ExpectedLinewidth>
-            <PrimaryFrequency>Frequency1</PrimaryFrequency>
+            <PrimaryFrequency>HFA</PrimaryFrequency>
             <MapRotationAngle>0.0</MapRotationAngle>
             <OnsPerLoad>5</OnsPerLoad>
             <VisibleWavelength>V</VisibleWavelength>
@@ -684,6 +683,7 @@
             </IndexedLocation>
           </mapPos>
         </instrument>
+        <observerComment></observerComment>
         <status>new</status>
         <aorID>_2</aorID>
         <overhead>300.0</overhead>
@@ -691,7 +691,7 @@
       <Request>
         <title>GREAT_OTF-0000</title>
         <target class="SofiaTargetFixedSingle">
-          <name>M 31</name>
+          <name>M31</name>
           <targetAttributes/>
           <locationAttributes/>
           <position>
@@ -877,10 +877,10 @@
             <Frequency3>921.7997</Frequency3>
             <OffPosTrack>FFI</OffPosTrack>
             <TotalTime>1302</TotalTime>
-            <Frequency2>1900.5369</Frequency2>
+            <Frequency2>576.26793</Frequency2>
             <IDString></IDString>
             <InstrumentSpectralElement1>GRE_HFA</InstrumentSpectralElement1>
-            <InstrumentSpectralElement2>GRE_LFA</InstrumentSpectralElement2>
+            <InstrumentSpectralElement2>GRE_4G</InstrumentSpectralElement2>
             <MapCenterOffsetRA>0.0</MapCenterOffsetRA>
             <LinesPerOff>1</LinesPerOff>
             <ObsPlanConfig>DUAL-CHANNEL</ObsPlanConfig>
@@ -892,7 +892,7 @@
             <LinesPerLoad>5</LinesPerLoad>
             <TimePerPoint>1.0</TimePerPoint>
             <ExpectedLinewidth>0.0</ExpectedLinewidth>
-            <PrimaryFrequency>Frequency1</PrimaryFrequency>
+            <PrimaryFrequency>4G_1</PrimaryFrequency>
             <MapRotationAngle>0.0</MapRotationAngle>
             <VisibleWavelength>V</VisibleWavelength>
             <ChopAngleCoordinate>Sky</ChopAngleCoordinate>
@@ -945,298 +945,6 @@
         <status>new</status>
         <aorID>_3</aorID>
         <overhead>1422.0</overhead>
-      </Request>
-      <Request>
-        <title>GREAT_ON_THE_FLY_HONEYCOMB_MAP-0000</title>
-        <target class="SofiaTargetFixedSingle">
-          <name>M 31</name>
-          <targetAttributes/>
-          <locationAttributes/>
-          <position>
-            <lon>10.684707916666666</lon>
-            <lat>41.26875</lat>
-            <pm>
-              <lonPm>0.0</lonPm>
-              <latPm>0.0</latPm>
-            </pm>
-            <coordSystem>
-              <jsys>0</jsys>
-              <equinoxYear>2000.0</equinoxYear>
-              <equinoxDesc>J2000</equinoxDesc>
-              <coodSysName>Equatorial</coodSysName>
-              <jsysDesc>Equatorial J</jsysDesc>
-              <equatorial>true</equatorial>
-              <ecliptic>false</ecliptic>
-              <galactic>false</galactic>
-            </coordSystem>
-            <epoch>2000.0</epoch>
-            <userEnteredPos>
-              <lon>10.684707916666666</lon>
-              <lat>41.26875</lat>
-              <pm>
-                <lonPm>0.0</lonPm>
-                <latPm>0.0</latPm>
-              </pm>
-              <coordSystem>
-                <jsys>0</jsys>
-                <equinoxYear>2000.0</equinoxYear>
-                <equinoxDesc>J2000</equinoxDesc>
-                <coodSysName>Equatorial</coodSysName>
-                <jsysDesc>Equatorial J</jsysDesc>
-                <equatorial>true</equatorial>
-                <ecliptic>false</ecliptic>
-                <galactic>false</galactic>
-              </coordSystem>
-              <epoch>2000.0</epoch>
-              <lonStr>0h42m44.3299s</lonStr>
-              <latStr>+41d16m07.500s</latStr>
-            </userEnteredPos>
-          </position>
-          <guideStarList class="vector">
-            <Guidestar Imager="FPI-TO" Catalog="UCAC4" Radius="0.582">
-              <GuideStarName>657-002696</GuideStarName>
-              <GuideStarRA>10.6847256</GuideStarRA>
-              <GuideStarDec>41.2689112</GuideStarDec>
-              <GuideStarMagnitude Type="V">10.491</GuideStarMagnitude>
-              <GuideStarMagnitude2 Type="r">10.131</GuideStarMagnitude2>
-              <GuideStarProperMotionRA>-0.0050999999999999995</GuideStarProperMotionRA>
-              <GuideStarProperMotionDec>-0.013</GuideStarProperMotionDec>
-              <GuideStarBminusV>1.088000000000001</GuideStarBminusV>
-            </Guidestar>
-            <Guidestar Imager="FPI-TO" Catalog="UCAC4" Radius="30.289">
-              <GuideStarName>657-002708</GuideStarName>
-              <GuideStarRA>10.6910198</GuideStarRA>
-              <GuideStarDec>41.2756987</GuideStarDec>
-              <GuideStarMagnitude Type="V">11.577</GuideStarMagnitude>
-              <GuideStarMagnitude2 Type="f">15.829</GuideStarMagnitude2>
-              <GuideStarProperMotionRA>-999.0</GuideStarProperMotionRA>
-              <GuideStarProperMotionDec>-999.0</GuideStarProperMotionDec>
-              <GuideStarBminusV>1.2430000000000003</GuideStarBminusV>
-            </Guidestar>
-            <Guidestar Imager="FPI-TO" Catalog="UCAC4" Radius="123.607">
-              <GuideStarName>657-002651</GuideStarName>
-              <GuideStarRA>10.6394818</GuideStarRA>
-              <GuideStarDec>41.2639234</GuideStarDec>
-              <GuideStarMagnitude Type="V">12.114</GuideStarMagnitude>
-              <GuideStarMagnitude2 Type="r">11.942</GuideStarMagnitude2>
-              <GuideStarProperMotionRA>0.0077</GuideStarProperMotionRA>
-              <GuideStarProperMotionDec>-7.0E-4</GuideStarProperMotionDec>
-              <GuideStarBminusV>0.6489999999999991</GuideStarBminusV>
-            </Guidestar>
-            <Guidestar Imager="FPI-TO" Catalog="UCAC4" Radius="46.653">
-              <GuideStarName>657-002714</GuideStarName>
-              <GuideStarRA>10.6985448</GuideStarRA>
-              <GuideStarDec>41.2764823</GuideStarDec>
-              <GuideStarMagnitude Type="V">12.123</GuideStarMagnitude>
-              <GuideStarMagnitude2 Type="f">14.882</GuideStarMagnitude2>
-              <GuideStarProperMotionRA>-999.0</GuideStarProperMotionRA>
-              <GuideStarProperMotionDec>-999.0</GuideStarProperMotionDec>
-              <GuideStarBminusV>1.306000000000001</GuideStarBminusV>
-            </Guidestar>
-            <Guidestar Imager="FPI-TO" Catalog="UCAC4" Radius="45.718">
-              <GuideStarName>657-002679</GuideStarName>
-              <GuideStarRA>10.6678153</GuideStarRA>
-              <GuideStarDec>41.269</GuideStarDec>
-              <GuideStarMagnitude Type="V">12.181</GuideStarMagnitude>
-              <GuideStarMagnitude2 Type="f">15.468</GuideStarMagnitude2>
-              <GuideStarProperMotionRA>-999.0</GuideStarProperMotionRA>
-              <GuideStarProperMotionDec>-999.0</GuideStarProperMotionDec>
-              <GuideStarBminusV>1.1020000000000003</GuideStarBminusV>
-            </Guidestar>
-            <Guidestar Imager="FPI-TO" Catalog="UCAC4" Radius="73.467">
-              <GuideStarName>657-002732</GuideStarName>
-              <GuideStarRA>10.7103298</GuideStarRA>
-              <GuideStarDec>41.275505</GuideStarDec>
-              <GuideStarMagnitude Type="V">12.313</GuideStarMagnitude>
-              <GuideStarMagnitude2 Type="f">14.662</GuideStarMagnitude2>
-              <GuideStarProperMotionRA>-999.0</GuideStarProperMotionRA>
-              <GuideStarProperMotionDec>-999.0</GuideStarProperMotionDec>
-              <GuideStarBminusV>1.1959999999999997</GuideStarBminusV>
-            </Guidestar>
-            <Guidestar Imager="WFI" Catalog="HIPPARCOS" Radius="13892.0">
-              <GuideStarName>HIP4436</GuideStarName>
-              <GuideStarRA>14.1883814764</GuideStarRA>
-              <GuideStarDec>38.4993446221</GuideStarDec>
-              <GuideStarMagnitude Type="V">3.86</GuideStarMagnitude>
-              <GuideStarMagnitude2 Type="">999.0</GuideStarMagnitude2>
-              <GuideStarProperMotionRA>0.15278</GuideStarProperMotionRA>
-              <GuideStarProperMotionDec>0.03682</GuideStarProperMotionDec>
-              <GuideStarBminusV>0.13</GuideStarBminusV>
-            </Guidestar>
-            <Guidestar Imager="WFI" Catalog="HIPPARCOS" Radius="4841.282">
-              <GuideStarName>HIP3881</GuideStarName>
-              <GuideStarRA>12.453530359</GuideStarRA>
-              <GuideStarDec>41.0789108684</GuideStarDec>
-              <GuideStarMagnitude Type="V">4.53</GuideStarMagnitude>
-              <GuideStarMagnitude2 Type="">999.0</GuideStarMagnitude2>
-              <GuideStarProperMotionRA>0.02268</GuideStarProperMotionRA>
-              <GuideStarProperMotionDec>-0.01805</GuideStarProperMotionDec>
-              <GuideStarBminusV>-0.136</GuideStarBminusV>
-            </Guidestar>
-            <Guidestar Imager="WFI" Catalog="HIPPARCOS" Radius="12239.786">
-              <GuideStarName>HIP2900</GuideStarName>
-              <GuideStarRA>9.1935041613</GuideStarRA>
-              <GuideStarDec>44.4885869287</GuideStarDec>
-              <GuideStarMagnitude Type="V">5.14</GuideStarMagnitude>
-              <GuideStarMagnitude2 Type="">999.0</GuideStarMagnitude2>
-              <GuideStarProperMotionRA>-0.0367</GuideStarProperMotionRA>
-              <GuideStarProperMotionDec>0.03177</GuideStarProperMotionDec>
-              <GuideStarBminusV>1.587</GuideStarBminusV>
-            </Guidestar>
-            <Guidestar Imager="WFI" Catalog="HIPPARCOS" Radius="14774.096">
-              <GuideStarName>HIP2225</GuideStarName>
-              <GuideStarRA>7.0568907316</GuideStarRA>
-              <GuideStarDec>44.3944519892</GuideStarDec>
-              <GuideStarMagnitude Type="V">5.18</GuideStarMagnitude>
-              <GuideStarMagnitude2 Type="">999.0</GuideStarMagnitude2>
-              <GuideStarProperMotionRA>0.0841</GuideStarProperMotionRA>
-              <GuideStarProperMotionDec>-0.01533</GuideStarProperMotionDec>
-              <GuideStarBminusV>0.043</GuideStarBminusV>
-            </Guidestar>
-            <Guidestar Imager="WFI" Catalog="HIPPARCOS" Radius="6610.151">
-              <GuideStarName>HIP3231</GuideStarName>
-              <GuideStarRA>10.2799355025</GuideStarRA>
-              <GuideStarDec>39.4586640697</GuideStarDec>
-              <GuideStarMagnitude Type="V">5.3</GuideStarMagnitude>
-              <GuideStarMagnitude2 Type="">999.0</GuideStarMagnitude2>
-              <GuideStarProperMotionRA>-0.014369999999999999</GuideStarProperMotionRA>
-              <GuideStarProperMotionDec>-0.00302</GuideStarProperMotionDec>
-              <GuideStarBminusV>0.891</GuideStarBminusV>
-            </Guidestar>
-            <Guidestar Imager="WFI" Catalog="HIPPARCOS" Radius="13634.234">
-              <GuideStarName>HIP4903</GuideStarName>
-              <GuideStarRA>15.7260945015</GuideStarRA>
-              <GuideStarDec>41.3451574121</GuideStarDec>
-              <GuideStarMagnitude Type="V">5.95</GuideStarMagnitude>
-              <GuideStarMagnitude2 Type="">999.0</GuideStarMagnitude2>
-              <GuideStarProperMotionRA>-0.01696</GuideStarProperMotionRA>
-              <GuideStarProperMotionDec>-0.01695</GuideStarProperMotionDec>
-              <GuideStarBminusV>0.161</GuideStarBminusV>
-            </Guidestar>
-          </guideStarList>
-        </target>
-        <est class="SofiaEstimates">
-          <duration>1020.0</duration>
-        </est>
-        <instrument class="sspot.sofia.data.great.GREAT_ON_THE_FLY_HONEYCOMB_MAP">
-          <data>
-            <ArrayRotationAngle>0.0</ArrayRotationAngle>
-            <TargetOffsetRA>0.0</TargetOffsetRA>
-            <IRFlux>1.0</IRFlux>
-            <After1UTDate TimingType="Preferred"></After1UTDate>
-            <SourceType>Point_Source</SourceType>
-            <RequestedWVOverburden>Nominal</RequestedWVOverburden>
-            <Repeat>9</Repeat>
-            <IsCalibrator>No</IsCalibrator>
-            <aorID>_4</aorID>
-            <Frequency5>2514.316705</Frequency5>
-            <Frequency4>1267.01449</Frequency4>
-            <Frequency3>1900.5369</Frequency3>
-            <OffPosTrack>FFI</OffPosTrack>
-            <TotalTime>50</TotalTime>
-            <Frequency2>1900.5369</Frequency2>
-            <IDString></IDString>
-            <InstrumentSpectralElement1>GRE_HFA</InstrumentSpectralElement1>
-            <InstrumentSpectralElement2>GRE_LFA</InstrumentSpectralElement2>
-            <RepsPerLoad>4</RepsPerLoad>
-            <ObsPlanConfig>DUAL-CHANNEL</ObsPlanConfig>
-            <DesiredResolution>0.0</DesiredResolution>
-            <ObservingPriority>Medium</ObservingPriority>
-            <IRFluxUnit>Jy</IRFluxUnit>
-            <MinimumContiguousTime>0.0</MinimumContiguousTime>
-            <TimePerPoint>1.0</TimePerPoint>
-            <ExpectedLinewidth>0.0</ExpectedLinewidth>
-            <PrimaryFrequency>HFA</PrimaryFrequency>
-            <VisibleWavelength>V</VisibleWavelength>
-            <ChopAngleCoordinate>Sky</ChopAngleCoordinate>
-            <OffPerPattern>1</OffPerPattern>
-            <NodType>Dual_Beam_Switch</NodType>
-            <ChopThrow>60.0</ChopThrow>
-            <Before2UTDate></Before2UTDate>
-            <ObsPlanMode>OTFHONEYCOMBMAP_BSW</ObsPlanMode>
-            <TargetOffsetDec>0.0</TargetOffsetDec>
-            <VisibleMagnitude>1.0</VisibleMagnitude>
-            <ChopAngle>90.0</ChopAngle>
-            <IRWavelength>10.0</IRWavelength>
-            <InstrumentName>GREAT</InstrumentName>
-            <IsTimeCritical>No</IsTimeCritical>
-            <Before1UTDate></Before1UTDate>
-            <IsExtraTime>No</IsExtraTime>
-            <MapArea>0.0</MapArea>
-            <After2UTDate></After2UTDate>
-            <IsSpecialObservation>No</IsSpecialObservation>
-            <Velocity>0.0</Velocity>
-            <Frequency>4744.77749</Frequency>
-          </data>
-          <corners>
-            <IndexedLocation>
-              <index>0</index>
-              <ra>10.68263830258917</ra>
-              <dec>41.27009722222222</dec>
-            </IndexedLocation>
-            <IndexedLocation>
-              <index>1</index>
-              <ra>10.684190510483635</ra>
-              <dec>41.27076944444444</dec>
-            </IndexedLocation>
-            <IndexedLocation>
-              <index>2</index>
-              <ra>10.687294920890444</ra>
-              <dec>41.26942222222222</dec>
-            </IndexedLocation>
-            <IndexedLocation>
-              <index>3</index>
-              <ra>10.687294894255011</ra>
-              <dec>41.268077777777776</dec>
-            </IndexedLocation>
-            <IndexedLocation>
-              <index>4</index>
-              <ra>10.684190526486908</ra>
-              <dec>41.266730555555554</dec>
-            </IndexedLocation>
-            <IndexedLocation>
-              <index>5</index>
-              <ra>10.682638345293915</ra>
-              <dec>41.267402777777775</dec>
-            </IndexedLocation>
-          </corners>
-          <mapPos>
-            <IndexedLocation label="HFA_corner_1">
-              <index>0</index>
-              <ra>10.68263830258917</ra>
-              <dec>41.27009722222222</dec>
-            </IndexedLocation>
-            <IndexedLocation label="HFA_corner_2">
-              <index>1</index>
-              <ra>10.684190510483635</ra>
-              <dec>41.27076944444444</dec>
-            </IndexedLocation>
-            <IndexedLocation label="HFA_corner_3">
-              <index>2</index>
-              <ra>10.687294920890444</ra>
-              <dec>41.26942222222222</dec>
-            </IndexedLocation>
-            <IndexedLocation label="HFA_corner_4">
-              <index>3</index>
-              <ra>10.687294894255011</ra>
-              <dec>41.268077777777776</dec>
-            </IndexedLocation>
-            <IndexedLocation label="HFA_corner_5">
-              <index>4</index>
-              <ra>10.684190526486908</ra>
-              <dec>41.266730555555554</dec>
-            </IndexedLocation>
-            <IndexedLocation label="HFA_corner_6">
-              <index>5</index>
-              <ra>10.682638345293915</ra>
-              <dec>41.267402777777775</dec>
-            </IndexedLocation>
-          </mapPos>
-        </instrument>
-        <observerComment></observerComment>
-        <status>new</status>
-        <aorID>_4</aorID>
-        <overhead>570.0</overhead>
       </Request>
     </vector>
     <ObsPlanObsBlockInfoList>

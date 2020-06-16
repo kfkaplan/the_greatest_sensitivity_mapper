@@ -79,9 +79,9 @@ def open_aors(filename):
 class aor:
 	def __init__(self, aor_dict): #Contstruct aor object
 		instr_data = aor_dict['instrument']['data']
-		self.array1 = HFA_array()
-		if instr_data['InstrumentSpectralElement2'] == 'GRE_LFA':
-			self.array2 = LFA_array()
+		# self.array1 = HFA_array()
+		# if instr_data['InstrumentSpectralElement2'] == 'GRE_LFA':
+		# 	self.array2 = LFA_array()
 		# else: #4GREAT
 		# 	self.array2 = FOURGREAT_array()
 		self.map_type = aor_dict['instrument']['@class'].split('.')[-1] #'GREAT_SP', 'GREAT_Raster', 'GREAT_OTF', OR 'GREAT_ON_THE_FLY_HONEYCOMB_MAP'
@@ -110,13 +110,22 @@ class aor:
 		else:
 			print('ERROR: '+self.map_type+' is not a valid map type to paint in the sky.')
 	def paint(self, skyobj, which_array): #Paint AOR onto sky object with specified array ("HFA", "LFA", or "4GREAT")
-		#Determine which array to use
+		# #Determine which array to use and generate the appropriate object
 		if which_array.upper() == 'HFA':
-			array_obj = self.array1
-		elif which_array.upper() == 'LFA' or which_array.upper() == '4GREAT' or which_array.upper() == '4G':
-			array_obj = self.array2
+			array_obj = HFA_array()
+		elif which_array.upper() == 'LFA':
+			array_obj = LFA_array()
+		elif which_array.upper() == '4G1':
+			array_obj = FG1_array()
+		elif which_array.upper() == '4G2':
+			array_obj = FG2_array()
+		elif which_array.upper() == '4G3':
+			array_obj = FG3_array()
+		elif which_array.upper() == '4G4':
+			array_obj = FG4_array()
 		else:
-			print('ERROR: '+which_array+' is not a valid array. Please set to be either HFA, LFA, or 4GREAT')
+			print('ERROR: '+which_array+' is not a valid array. Please set to be either HFA, LFA, 4G1, 4G2, 4G3, or 4G4')
+			return
 		#Determine the map type then paint the array
 		if self.map_type == 'GREAT_SP':
 			array_obj.single_point(skyobj, x=self.x, y=self.y, time=self.time, array_angle=self.array_angle, cycles=self.cycles)
@@ -218,7 +227,10 @@ class GREAT_array:
 		if paint_xmax > sky_xmax: paint_xmax = sky_xmax
 		if paint_ymax > sky_ymax: paint_ymax = sky_ymax
 		ix2, ix1, iy1, iy2 = skyobj.get_range_indicies(paint_xmin, paint_xmax, paint_ymin, paint_ymax)  #Grab the indicies for the pixels on the sky over witch to paint onto (NOTE: x axis is inverted because RA increases to the left)
-		skyobj.data[iy1:iy2, ix1:ix2] += self.array_profile(skyobj.x[iy1:iy2, ix1:ix2], skyobj.y[iy1:iy2, ix1:ix2]) * time * cycles #Paint pattern onto the sky
+		if np.size(self.array_profile) > 1: #If LFA or HFA ()
+			skyobj.data[iy1:iy2, ix1:ix2] += self.array_profile(skyobj.x[iy1:iy2, ix1:ix2], skyobj.y[iy1:iy2, ix1:ix2]) * time * cycles #Paint pattern onto the sky
+		else: #Else if 4GREAT
+			skyobj.data[iy1:iy2, ix1:ix2] += self.array_profile[0](skyobj.x[iy1:iy2, ix1:ix2], skyobj.y[iy1:iy2, ix1:ix2]) * time * cycles #Paint pattern onto the sky
 	def single_point(self, skyobj, x=0., y=0., time=1.0, array_angle=0., cycles=1): #Paint a single point observation onto the sky object	
 		self.rotate(array_angle) #Set rotation angle
 		self.position(x, y) #Set central position for the single pointing
@@ -291,8 +303,59 @@ class HFA_array(GREAT_array):
 		self.y = 0.
 		self.range = 2.0 * r #Maximum range in arcsec +/- x and y to paint, this is for optimization
 
-# #Child class to store array profile for 4GREAT
-# class FOURGREAT_array(GREAT_array):
-# 	def __init__(self):
-# 	#TO DO
+
+
+#Child class to store array profile for 4GREAT 1, FWHM is from the ICD
+class FG1_array(GREAT_array):
+	def __init__(self, fwhm=50.0, type='4G1', amplitude=1.0):
+		stddev = fwhm / (2.0 * np.sqrt(np.log(2.0)))#Convert FWHM to stddev
+		pix0 =  models.Gaussian2D(amplitude=amplitude, x_mean=0.0, y_mean=0.0, x_stddev=stddev, y_stddev=stddev) #Define pixel profile
+		self.array_profile = [pix0]
+		self.angle = 0.
+		self.rotate(self.angle)
+		self.type = type
+		self.x = 0.
+		self.y = 0.
+		self.range = 3.0*fwhm #Maximum range in arcsec +/- x and y to paint, this is for optimization
+
+#Child class to store array profile for 4GREAT 1, FWHM is from the ICD
+class FG2_array(GREAT_array):
+	def __init__(self, fwhm=30.0, type='4G2', amplitude=1.0):
+		stddev = fwhm / (2.0 * np.sqrt(np.log(2.0)))#Convert FWHM to stddev
+		pix0 =  models.Gaussian2D(amplitude=amplitude, x_mean=0.0, y_mean=0.0, x_stddev=stddev, y_stddev=stddev) #Define pixel profile
+		self.array_profile = [pix0]
+		self.angle = 0.
+		self.rotate(self.angle)
+		self.type = type
+		self.x = 0.
+		self.y = 0.
+		self.range = 3.0*fwhm #Maximum range in arcsec +/- x and y to paint, this is for optimization
+
+#Child class to store array profile for 4GREAT 1, FWHM is from the ICD
+class FG3_array(GREAT_array):
+	def __init__(self, fwhm=19.0, type='4G3', amplitude=1.0):
+		stddev = fwhm / (2.0 * np.sqrt(np.log(2.0)))#Convert FWHM to stddev
+		pix0 =  models.Gaussian2D(amplitude=amplitude, x_mean=0.0, y_mean=0.0, x_stddev=stddev, y_stddev=stddev) #Define pixel profile
+		self.array_profile = [pix0]
+		self.angle = 0.
+		self.rotate(self.angle)
+		self.type = type
+		self.x = 0.
+		self.y = 0.
+		self.range = 3.0*fwhm #Maximum range in arcsec +/- x and y to paint, this is for optimization
+
+#Child class to store array profile for 4GREAT 1, FWHM is from the ICD
+class FG4_array(GREAT_array):
+	def __init__(self, fwhm=11.0, type='4G4', amplitude=1.0):
+		stddev = fwhm / (2.0 * np.sqrt(np.log(2.0)))#Convert FWHM to stddev
+		pix0 =  models.Gaussian2D(amplitude=amplitude, x_mean=0.0, y_mean=0.0, x_stddev=stddev, y_stddev=stddev) #Define pixel profile
+		self.array_profile = [pix0]
+		self.angle = 0.
+		self.rotate(self.angle)
+		self.type = type
+		self.x = 0.
+		self.y = 0.
+		self.range = 3.0*fwhm #Maximum range in arcsec +/- x and y to paint, this is for optimization
+
+
 
