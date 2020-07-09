@@ -251,7 +251,9 @@ class sky:
 	# 	scale_by = (self.total_exptime/self.pixel_area) / np.nansum(self.data)
 	# 	self.data *= scale_by
 	# 	self.noise *= scale_by
-	def simulate_observation(self, Tsys=0., TPOTF=False, Non=1.0, deltafreq=1e6): #Calculate noise and smooth the data and noisea by convolving with a 2D gausasian kernel with a FHWM that is 1/3 the beam profile, this is the final step for simulating data
+	def simulate_observation(self, Tsys=0., TPOTF=False, Non=1.0, deltafreq=1e6, deltav=0.): #Calculate noise and smooth the data and noisea by convolving with a 2D gausasian kernel with a FHWM that is 1/3 the beam profile, this is the final step for simulating data
+		if deltav > 0: #If user specifies the size of the spectral element in km/s, use that to calculate deltafreq instead of deltafreq being provided
+				deltafreq = (deltav / 299792.458) * self.freq
 		if not TPOTF: #If not a Total Power OTF map (most observations)...
 			self.noise = 2.0 * Tsys / (self.exptime * deltafreq)**0.5 #Calulate RMS temperature using Equation 6-5 in the observer's handbook
 		else: #If a Total Power OTF map....
