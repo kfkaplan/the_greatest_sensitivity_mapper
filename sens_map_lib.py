@@ -251,7 +251,7 @@ class sky:
 	# 	scale_by = (self.total_exptime/self.pixel_area) / np.nansum(self.data)
 	# 	self.data *= scale_by
 	# 	self.noise *= scale_by
-	def simulate_observation(self, Tsys=0., TPOTF=False, Non=1.0, deltafreq=1.0): #Calculate noise and smooth the data and noisea by convolving with a 2D gausasian kernel with a FHWM that is 1/3 the beam profile, this is the final step for simulating data
+	def simulate_observation(self, Tsys=0., TPOTF=False, Non=1.0, deltafreq=1e6): #Calculate noise and smooth the data and noisea by convolving with a 2D gausasian kernel with a FHWM that is 1/3 the beam profile, this is the final step for simulating data
 		if not TPOTF: #If not a Total Power OTF map (most observations)...
 			self.noise = 2.0 * Tsys / (self.exptime * deltafreq)**0.5 #Calulate RMS temperature using Equation 6-5 in the observer's handbook
 		else: #If a Total Power OTF map....
@@ -260,6 +260,8 @@ class sky:
 		kernel = Gaussian2DKernel(x_stddev=stddev, y_stddev=stddev) #Define the gaussian kernel to be 1/3 the FWHM of the beam profile
 		self.data = convolve(self.data, kernel) #Apply convolution to the data
 		self.noise = convolve(self.noise**2, kernel)**0.5 #Apply convolution to the variance and convert back to noise
+		self.exptime = convolve(self.exptime, kernel) #Apply convolution to the exposure time map
+		self.data = self.data / self.exptime #normalize by exposure time
 	def input(self, model_shape): #Draw an astropy model shape onto  sigal (e.g. create a model of the "true" signal)
 		self.signal += model_shape(self.x, self.y)
 	def downsample(self, factor): #Downsample sky grid by an integer factor (1/2, 1/3, 1/4, ect.) using the astropy function 

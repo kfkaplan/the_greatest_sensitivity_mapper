@@ -24,7 +24,7 @@
       <IsArchival>false</IsArchival>
       <MultiObservatoryProposal>NONE</MultiObservatoryProposal>
       <SpecialInstructions></SpecialInstructions>
-      <TotalObsDuration>3444.0</TotalObsDuration>
+      <TotalObsDuration>11256.0</TotalObsDuration>
       <SubmissionKey></SubmissionKey>
       <pdf></pdf>
       <teampdf></teampdf>
@@ -858,7 +858,7 @@
           </guideStarList>
         </target>
         <est class="SofiaEstimates">
-          <duration>2724.0</duration>
+          <duration>10536.0</duration>
         </est>
         <instrument class="sspot.sofia.data.great.GREAT_OTF">
           <data>
@@ -876,7 +876,7 @@
             <Frequency4>1267.01449</Frequency4>
             <Frequency3>921.7997</Frequency3>
             <OffPosTrack>FFI</OffPosTrack>
-            <TotalTime>1302</TotalTime>
+            <TotalTime>5208</TotalTime>
             <Frequency2>576.26793</Frequency2>
             <IDString></IDString>
             <InstrumentSpectralElement1>GRE_HFA</InstrumentSpectralElement1>
@@ -890,7 +890,7 @@
             <MinimumContiguousTime>0.0</MinimumContiguousTime>
             <NumStepDec>21</NumStepDec>
             <LinesPerLoad>5</LinesPerLoad>
-            <TimePerPoint>1.0</TimePerPoint>
+            <TimePerPoint>4.0</TimePerPoint>
             <ExpectedLinewidth>0.0</ExpectedLinewidth>
             <PrimaryFrequency>4G_1</PrimaryFrequency>
             <MapRotationAngle>0.0</MapRotationAngle>
@@ -942,9 +942,10 @@
             </IndexedLocation>
           </mapPos>
         </instrument>
+        <observerComment></observerComment>
         <status>new</status>
         <aorID>_3</aorID>
-        <overhead>1422.0</overhead>
+        <overhead>5328.0</overhead>
       </Request>
     </vector>
     <ObsPlanObsBlockInfoList>
