@@ -5,12 +5,14 @@
 
 #Import python libraries 
 import numpy as np
+import copy
 from scipy.interpolate import interp1d
 from matplotlib import pyplot
 from astropy.io import fits
 from astropy.modeling import models, fitting
 from astropy.convolution import convolve, Gaussian2DKernel
-from astropy.coordinates import SkyCoord
+from astropy.convolution.kernels import Model2DKernel
+#from astropy.coordinates import SkyCoord
 from astropy.nddata.utils import block_reduce
 import xmltodict #For reading in AORs
 
@@ -231,7 +233,6 @@ class sky:
 			title = r'Signal (T_a)'
 		elif map_type == 'noise':
 			min_noise = np.nanmin(self.noise)
-			print(min_noise)
 			pyplot.imshow(self.noise, origin='bottom', extent=self.extent, vmax=min_noise*1.5, vmin=min_noise, **kwargs)
 			label = r'\Delta T_a'
 			title = r'Noise (\Delta Ta)'
@@ -258,12 +259,20 @@ class sky:
 			self.noise = 2.0 * Tsys / (self.exptime * deltafreq)**0.5 #Calulate RMS temperature using Equation 6-5 in the observer's handbook
 		else: #If a Total Power OTF map....
 			self.noise = Tsys * (1.0 + Non**-0.5)**0.5 / (self.exptime * deltafreq)*0.5 #Calculate RMS temp. for TP OTF maps
-		stddev = fwhm2std(self.fwhm) / 3.0
+		goodpix = np.isfinite(self.data) & (self.noise > 0.) & np.isfinite(self.noise)
+		s2n_before_convolution = np.nansum(self.data[goodpix] / self.exptime[goodpix]) / (np.nansum(self.noise[goodpix]**2)**0.5)
+		print( np.nansum(self.data[goodpix] / self.exptime[goodpix]), np.nansum(self.noise[goodpix]**2)**0.5)
+		print('S/N before convolution: ',s2n_before_convolution)
+		stddev = fwhm2std(self.fwhm) / (3.0 * self.plate_scale)
 		kernel = Gaussian2DKernel(x_stddev=stddev, y_stddev=stddev) #Define the gaussian kernel to be 1/3 the FWHM of the beam profile
+		square_gaussian_model = models.Gaussian2D(amplitude=1.0/(2.0*np.pi*stddev**2), x_stddev=stddev/np.sqrt(2), y_stddev=stddev/np.sqrt(2)) #Create a kernel that is a square of the original gaussian kernel, for propogation of uncertainity (noise)
+		kernel_squared =Model2DKernel(square_gaussian_model, x_size=5, y_size=5)
+		#kernel_squared = kernel
 		self.data = convolve(self.data, kernel) #Apply convolution to the data
-		self.noise = convolve(self.noise**2, kernel)**0.5 #Apply convolution to the variance and convert back to noise
+		self.noise = convolve(self.noise**2, kernel_squared)**0.5 #Apply convolution to the variance and convert back to noise
 		self.exptime = convolve(self.exptime, kernel) #Apply convolution to the exposure time map
 		self.data = self.data / self.exptime #normalize by exposure time
+		print('S/N after convolution: ',self.s2n())
 	def input(self, model_shape): #Draw an astropy model shape onto  sigal (e.g. create a model of the "true" signal)
 		self.signal += model_shape(self.x, self.y)
 	def downsample(self, factor): #Downsample sky grid by an integer factor (1/2, 1/3, 1/4, ect.) using the astropy function 
@@ -282,6 +291,12 @@ class sky:
 		self.noise = block_reduce(self.noise**2, factor, func=np.mean)**0.5 / factor #Note the 1/factor is actually 1/sqrt(factor*^2) since factor^2 is the number of pixels being averaged together
 		self.exptime = block_reduce(self.exptime, factor, func=np.mean)
 		self.signal = block_reduce(self.signal, factor, func=np.mean)
+	def s2n(self): #Return total signal-to-noise value as a sanity check
+		goodpix = np.isfinite(self.noise)
+		total_signal = np.nansum(self.data[goodpix])
+		total_noise = np.nansum(self.noise[goodpix]**2)**0.5
+		print(total_signal, total_noise)
+		return total_signal / total_noise
 
 
 
