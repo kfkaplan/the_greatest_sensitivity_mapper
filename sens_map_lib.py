@@ -182,11 +182,11 @@ class sky:
 			y_range = [0.0, y_range]
 		nx = int((x_range[1]-x_range[0])/plate_scale)
 		ny = int((y_range[1]-y_range[0])/plate_scale)
-		signal = np.zeros([nx, ny])
-		data = np.zeros([nx, ny])
-		noise = np.zeros([nx, ny])
-		exptime = np.zeros([nx, ny])
-		y, x = np.mgrid[0:nx,0:ny] * plate_scale
+		signal = np.zeros([ny, nx])
+		data = np.zeros([ny, nx])
+		noise = np.zeros([ny, nx])
+		exptime = np.zeros([ny, nx])
+		y, x = np.mgrid[0:ny,0:nx] * plate_scale
 		x += x_range[0]
 		y += y_range[0]
 		self.x_range = x_range #Save x,y ranges and plate scale
@@ -261,7 +261,6 @@ class sky:
 			self.noise = Tsys * (1.0 + Non**-0.5)**0.5 / (self.exptime * deltafreq)*0.5 #Calculate RMS temp. for TP OTF maps
 		goodpix = np.isfinite(self.data) & (self.noise > 0.) & np.isfinite(self.noise)
 		s2n_before_convolution = np.nansum(self.data[goodpix] / self.exptime[goodpix]) / (np.nansum(self.noise[goodpix]**2)**0.5)
-		print( np.nansum(self.data[goodpix] / self.exptime[goodpix]), np.nansum(self.noise[goodpix]**2)**0.5)
 		print('S/N before convolution: ',s2n_before_convolution)
 		stddev = fwhm2std(self.fwhm) / (3.0 * self.plate_scale)
 		kernel = Gaussian2DKernel(x_stddev=stddev, y_stddev=stddev) #Define the gaussian kernel to be 1/3 the FWHM of the beam profile
@@ -279,7 +278,7 @@ class sky:
 		plate_scale = self.plate_scale * factor #calculate new plate scale
 		nx = int((self.x_range[1]-self.x_range[0])/plate_scale)
 		ny = int((self.y_range[1]-self.y_range[0])/plate_scale)
-		y, x = np.mgrid[0:nx,0:ny] * plate_scale
+		y, x = np.mgrid[0:ny,0:nx] * plate_scale
 		x += self.x_range[0]
 		y += self.y_range[0]
 		self.plate_scale = plate_scale #Save the new plate scale and x,y coordinate 2D and 1D grids
@@ -327,7 +326,7 @@ class GREAT_array:
 		for pixel in self.array_profile: #Move back position zero point
 			pixel.x_mean = pixel.x_mean - dx
 			pixel.y_mean = pixel.y_mean - dy
-		self.angle = 0.
+		#self.angle = 0.
 	def rotate(self, angle): #Rotate array by the given angle
 		self.reset_array_rotation() #Zero rotation angle by reversing the previous rotation
 		self.set_array_rotation(angle) #Set new rotation angle
@@ -346,7 +345,7 @@ class GREAT_array:
 	def reset_array_rotation(self): #Rotate back to an angle of zero
 		self.set_array_rotation(-self.angle)
 		self.angle = 0.
-	def paint(self, skyobj, time=1.0, cycles=1, Tsys=0., TPOTF=False): #Paint a single instance of the array profile onto a sky object, this is the base for all observation types including single pointing and maps
+	def paint(self, skyobj, time=1.0, cycles=1, TPOTF=False): #Paint a single instance of the array profile onto a sky object, this is the base for all observation types including single pointing and maps
 		#skyobj.total_exptime += time*cycles #Add exposure time from this to the total
 		# deltaTa = get_deltaTa(Tsys=Tsys, TPOTF=TPOTF) #Get RMS antenna temperature 
 		sky_xmax, sky_xmin, sky_ymin, sky_ymax = skyobj.extent #Grab limits of the sky coordinates
@@ -358,7 +357,7 @@ class GREAT_array:
 		if paint_ymax > sky_ymax: paint_ymax = sky_ymax
 		ix2, ix1, iy1, iy2 = skyobj.get_range_indicies(paint_xmin, paint_xmax, paint_ymin, paint_ymax)  #Grab the indicies for the pixels on the sky over witch to paint onto (NOTE: x axis is inverted because RA increases to the left)
 		chunk_of_signal = skyobj.signal[iy1:iy2, ix1:ix2] #Isolate the chunk of the signal array for painting at this particular position
-		chunk_of_noise = skyobj.noise[iy1:iy2, ix1:ix2]
+		#chunk_of_noise = skyobj.noise[iy1:iy2, ix1:ix2]
 		# if np.size(self.array_profile) > 1: #If LFA or HFA
 		for this_array_profile in self.array_profile: #Loop through each individual pixel
 			chunk_of_array_profile = this_array_profile(skyobj.x[iy1:iy2, ix1:ix2], skyobj.y[iy1:iy2, ix1:ix2]) #Isolate the piece of the array profile to use 
@@ -373,11 +372,11 @@ class GREAT_array:
 		# 	skyobj.data[iy1:iy2, ix1:ix2] += convolved_signal * time * cycles #Convolve pattern with expected signal and paint result onto the sky
 		# 	skyobj.exptime[iy1:iy2, ix1:ix2] += time * cycles * chunk_of_array_profile #Convolve the exposure time with the profile for this particular pixel
 		# 	skyobj.fwhm = std2fwhm(self.array_profile.x_stddev) #Copy beam profile FWHM to sky object for later using to determine the convolution kernel to smooth with
-	def single_point(self, skyobj, x=0., y=0., time=1.0, array_angle=0., cycles=1, Tsys=0.): #Paint a single point observation onto the sky object	
+	def single_point(self, skyobj, x=0., y=0., time=1.0, array_angle=0., cycles=1): #Paint a single point observation onto the sky object	
 		self.rotate(array_angle) #Set rotation angle
 		self.position(x, y) #Set central position for the single pointing
-		self.paint(skyobj, time=time, cycles=cycles, Tsys=Tsys) #Paint the single pointing to the sky object
-	def map(self, skyobj, x=0., y=0., nx=1, ny=1, dx=1.0, dy=1.0, time=1.0, cycles=1, array_angle=0., map_angle=0., Tsys=0.): #Paint a raster or OFT map observation onto the sky object
+		self.paint(skyobj, time=time, cycles=cycles) #Paint the single pointing to the sky object
+	def map(self, skyobj, x=0., y=0., nx=1, ny=1, dx=1.0, dy=1.0, time=1.0, cycles=1, array_angle=0., map_angle=0.): #Paint a raster or OFT map observation onto the sky object
 		self.rotate(array_angle) #Set rotation angle
 		map_y, map_x = np.mgrid[0:ny,0:nx] #Generate map coordinates
 		map_x = (map_x - 0.5*(nx-1.0))*dx #Center map and scale map coordinates to the proper step size
@@ -389,8 +388,8 @@ class GREAT_array:
 		for ix in range(nx): #Loop through each step in the map
 			for iy in range(ny):
 				self.position(rotated_map_x[iy,ix], rotated_map_y[iy,ix]) #Set array position at this step
-				self.paint(skyobj, time=time, cycles=cycles, Tsys=Tsys) #Paint the current step to the sky object
-	def honeycomb(self, skyobj, x=0., y=0., time=1.0, cycles=1, array_angle=0., map_angle=0., Tsys=0.):
+				self.paint(skyobj, time=time, cycles=cycles) #Paint the current step to the sky object
+	def honeycomb(self, skyobj, x=0., y=0., time=1.0, cycles=1, array_angle=0., map_angle=0.):
 		self.rotate(array_angle) #Set rotation angle
 		if self.type == 'LFAV' or self.type == 'LFAH': #Set multiplier for honeycomb offsets based on which array you are using
 			honeycomb_multiplier = 6.34
@@ -401,7 +400,67 @@ class GREAT_array:
 		honeycomb_map_positions = np.array([x,y]).T + (honeycomb_pattern*honeycomb_multiplier).dot(rot_matrix) #Construct a vector of honeycomb positions and dot it with the rotation matrix
 		for honeycomb_map_position in honeycomb_map_positions:
 			self.position(honeycomb_map_position[0], honeycomb_map_position[1]) #Set array position at this step
-			self.paint(skyobj, time=time, cycles=cycles, Tsys=Tsys) #Paint the current step to the sky object
+			self.paint(skyobj, time=time, cycles=cycles) #Paint the current step to the sky object
+	def array_otf(self, skyobj, nblock_scan=1, nblock_perp=1, x=0, y=0, step=1.0, length=1.0, time=1.0, cycles=1, map_angle=0., direction='x', nscans=2): #Paint a set of array otf blocks in a particular direction (x or y)
+		# if direction.lower() == 'x': #If scan direction is x, the block angle is the same as the map angle
+		# 	block_angle = map_angle
+		# elif direction.lower() == 'y': #If the scan direction is y, simply add 90 degrees to the map angle.  Simple solution, eh?
+		# 	block_angle = map_angle + 90.0
+		block_angle = map_angle #the block angle is the same as the map angle
+		if self.type == 'LFAV' or self.type == 'LFAH': #Set the size (in arcsec) of each block in the scan and perpendicular directions depending on what array is being used
+			array_size = 72.6
+			# length_scan_arcsec = 72.6 * length
+			# length_perp_arcsec = 72.6
+		elif self.type == 'HFA':
+			array_size = 31.6
+			# length_scan_arcsec = 31.6 * length
+			# length_perp_arcsec = 31.6
+		if direction.lower() == 'x':
+			length_scan_x = array_size * length
+			length_scan_y = array_size
+			n_block_x = nblock_scan
+			n_block_y = nblock_perp
+		elif direction.lower() == 'y':
+			length_scan_x = array_size 
+			length_scan_y = array_size * length
+			n_block_x = nblock_perp
+			n_block_y = nblock_scan
+		block_y, block_x = np.mgrid[0:n_block_y,0:n_block_x] #Generate block coordinates
+		block_x = (block_x - 0.5*(n_block_x-1.0))*length_scan_x #Center block and scale coordinates to the proper lengths
+		block_y = (block_y - 0.5*(n_block_y-1.0))*length_scan_y
+		cos_block_angle = np.cos(np.radians(block_angle)) #Rotate blockcoordiunates by map angle (using a rotation matrix) and add starting position to block coordinates
+		sin_block_angle = np.sin(np.radians(block_angle))
+		rotated_block_x = x + (cos_block_angle*block_x + sin_block_angle*block_y)
+		rotated_block_y = y + (-sin_block_angle*block_x + cos_block_angle*block_y)
+		for ix in range(n_block_x): #Paint blocks along x direction
+			for iy in range(n_block_y): #Paint blocks along y direction
+				self.array_otf_block(skyobj, x=rotated_block_x[iy, ix], y=rotated_block_y[iy, ix], step=step, length=length, time=time, cycles=cycles, map_angle=map_angle, direction=direction, nscans=nscans)
+	def array_otf_block(self, skyobj, x=0., y=0., step=1.0, length=1.0, time=1.0, cycles=1, map_angle=0., direction='x', nscans=2): #Paint a single block for an Array OTF Map onto
+		if self.type == 'LFAV' or self.type == 'LFAH': #Set length of block in arcseconds to be length * array size
+			length_arcsec = length * 72.6
+			scan_spacing = 72.6 / (7.0 * nscans)
+		elif self.type == 'HFA':
+			length_arcsec = length * 31.6
+			scan_spacing = 31.6 / (7.0 * nscans)
+		if direction.lower() == 'x': 
+			array_angle = -19.1 + map_angle #Set array angle to always be -19.1 for x-direction array OTF maps (note this angle is relative to the map angle)
+			nx = int(length_arcsec/step)
+			ny = nscans
+			dx = step
+			dy = scan_spacing
+		elif direction.lower() == 'y':
+			array_angle  = 10.9 + map_angle #Set array angle to always be +10.9 for y-direction array OTF maps (note this angle is relative to the map angle)
+			nx = nscans
+			ny = int(length_arcsec/step)
+			dx = scan_spacing
+			dy = step
+		else:
+			print('ERROR: Array OTF block direction needs to be specified as x or y.')
+		self.map(skyobj, x=x, y=y, nx=nx, ny=ny, dx=dx, dy=dy, time=time, cycles=cycles, array_angle=array_angle, map_angle=map_angle) #Paint a map
+
+
+
+
 	# def get_deltaTa_singlepoint(self, deltafreq=1.0, time=1.0): #Get the RMS antenna temperature (delta-Ta) for a single pointing (when time on = time off)
 	# 	deltaTa = 2.0 * self.get_Tsys() / (time * deltafreq)**0.5 #Equation 6-5 in the observer's handbook
 	# 	return deltaTa
