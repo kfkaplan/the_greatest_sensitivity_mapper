@@ -105,7 +105,7 @@ class aor:
 		# 	self.array2 = LFA_array()
 		# else: #4GREAT
 		# 	self.array2 = FOURGREAT_array()
-		self.map_type = aor_dict['instrument']['@class'].split('.')[-1] #'GREAT_SP', 'GREAT_Raster', 'GREAT_OTF', OR 'GREAT_ON_THE_FLY_HONEYCOMB_MAP'
+		self.map_type = aor_dict['instrument']['@class'].split('.')[-1] #'GREAT_SP', 'GREAT_Raster', 'GREAT_OTF', 'GREAT_ON_THE_FLY_HONEYCOMB_MAP', or 'GREAT_ON_THE_FLY_ARRAY_MAPPING'
 		self.cycles = float(instr_data['Repeat'])
 		self.array_angle = float(instr_data['ArrayRotationAngle'])
 		frequencies = [] #Grab  frequencies 1,2,3,4,5
@@ -129,12 +129,33 @@ class aor:
 			self.map_angle = float(instr_data['MapRotationAngle'])
 			self.x = float(instr_data['MapCenterOffsetRA'])
 			self.y = float(instr_data['MapCenterOffsetDec'])
-			#STUFF
+			self.nod_type = instr_data['NodType'] #'Total_Power', 'Dual_Beam_Switch', ect.
+			if self.nod_type == 'Total_Power':
+				self.Non = int(instr_data['LinesPerOff'])
 		elif self.map_type == 'GREAT_ON_THE_FLY_HONEYCOMB_MAP':
 			self.time = float(instr_data['TimePerPoint'])
 			self.map_angle = float(instr_data['ArrayRotationAngle'])
 			self.x = float(instr_data['TargetOffsetRA'])
 			self.y = float(instr_data['TargetOffsetDec'])
+		elif self.map_type == 'GREAT_ON_THE_FLY_ARRAY_MAPPING':
+			self.nod_type = instr_data['NodType'] #'Total_Power', 'Dual_Beam_Switch', ect.
+			self.Non = int(instr_data['LinesPerOff'])
+			self.map_angle = float(instr_data['MapRotationAngle'])
+			self.nscans = int(instr_data['NumFillOTF'])
+			self.x = float(instr_data['MapCenterOffsetRA'])
+			self.y = float(instr_data['MapCenterOffsetDec'])
+			self.stepsize = float(instr_data['MapStepSize'])
+			self.scan_direction = instr_data['ScanDirection'] #'x_direction', 'y_direction', or 'x_and_y_directions'
+			if self.scan_direction == 'x_direction' or self.scan_direction == 'x_and_y_directions':
+				self.x_length = float(instr_data['XMapScanLength'])
+				self.x_time = float(instr_data['XMapTimePerPoint'])
+				self.x_blocks_scan = int(instr_data['XMapNumBlocksX'])
+				self.x_blocks_perp = int(instr_data['XMapNumBlocksY'])
+			if self.scan_direction == 'y_direction' or self.scan_direction == 'x_and_y_directions':
+				self.y_length = float(instr_data['YMapScanLength'])
+				self.y_time = float(instr_data['YMapTimePerPoint'])
+				self.y_blocks_scan = int(instr_data['YMapNumBlocksY'])
+				self.y_blocks_perp = int(instr_data['YMapNumBlocksX'])
 		else:
 			print('ERROR: '+self.map_type+' is not a valid map type to paint in the sky.')
 	def paint(self, skyobj, which_array): #Paint AOR onto sky object with specified array ("HFA", "LFA", or "4GREAT")
@@ -161,16 +182,28 @@ class aor:
 			array_obj = FG4_array()
 			array_obj.freq = self.frequencies[4]
 		else:
-			print('ERROR: '+which_array+' is not a valid array. Please set to be either HFA, LFA, 4G1, 4G2, 4G3, or 4G4')
+			print('ERROR: '+which_array+' is not a valid array. Please set to be either HFA, LFAH, LFAV, 4G1, 4G2, 4G3, or 4G4')
 			return
 		#Determine the map type then paint the array
 		if self.map_type == 'GREAT_SP':
 			array_obj.single_point(skyobj, x=self.x, y=self.y, time=self.time, array_angle=self.array_angle, cycles=self.cycles)
 		elif self.map_type == 'GREAT_Raster' or self.map_type == 'GREAT_OTF':
+			if self.map_type == 'GREAT_OTF' and self.nod_type == 'Total_Power':  #Set a few parameters to ensure proper calculation of Total Power OTF maps
+				skyobj.TPOTF = True
+				skyobj.Non = self.Non
 			array_obj.map(skyobj, x=self.x, y=self.y, nx=self.nx, ny=self.ny, dx=self.dx, dy=self.dy, array_angle=self.array_angle, cycles=self.cycles, time=self.time)
 		elif self.map_type == 'GREAT_ON_THE_FLY_HONEYCOMB_MAP':
 			array_obj.honeycomb(skyobj, x=self.x, y=self.y, array_angle=self.array_angle, map_angle=self.map_angle, cycles=self.cycles, time=self.time)
-
+		elif self.map_type == 'GREAT_ON_THE_FLY_ARRAY_MAPPING':
+			if self.nod_type == 'Total_Power': #Set a few parameters to ensure proper calculation of Total Power Array OTF maps
+				skyobj.TPOTF = True
+				skyobj.Non = self.Non
+			if self.scan_direction == 'x_direction' or self.scan_direction == 'x_and_y_directions': #Scans in x direction
+					array_obj.array_otf(skyobj, x=self.x, y=self.y, nblock_scan=self.x_blocks_scan, nblock_perp=self.x_blocks_perp, step=self.stepsize, length=self.x_length, 
+							time=self.x_time, cycles=self.cycles, map_angle=self.map_angle, direction='x', nscans=self.nscans)
+			if self.scan_direction == 'y_direction' or self.scan_direction == 'x_and_y_directions': #Scans in y direction
+					array_obj.array_otf(skyobj, x=self.x, y=self.y, nblock_scan=self.y_blocks_scan, nblock_perp=self.y_blocks_perp, step=self.stepsize, length=self.y_length, 
+							time=self.y_time, cycles=self.cycles, map_angle=self.map_angle, direction='y', nscans=self.nscans)
 
 
 #Class that stores the 2D array representing the sky and it's associated coordinate system
@@ -205,6 +238,8 @@ class sky:
 		#self.pixel_area = plate_scale**2 #Area per pixel, used in calculating (exptime/arcsec^2)
 		self.fwhm = 0. #Store latest beam profile FWHM used on this sky object
 		self.freq = 0. #Store latest frequency painted onto this sky object]
+		self.TPOTF = False #Store if this is a Total Power OTF map or not (used for noise calculations)
+		self.Non = 1.0 #Store N_on, used to caculate noise if this is a Total Power OTF map
 		#self.Tsys = Tsys
 		#self.deltaTa = deltaTa
 		#self.Tsky = Tsky #Ambient temperature for the atmosphere
@@ -252,13 +287,13 @@ class sky:
 	# 	scale_by = (self.total_exptime/self.pixel_area) / np.nansum(self.data)
 	# 	self.data *= scale_by
 	# 	self.noise *= scale_by
-	def simulate_observation(self, Tsys=0., TPOTF=False, Non=1.0, deltafreq=1e6, deltav=0.): #Calculate noise and smooth the data and noisea by convolving with a 2D gausasian kernel with a FHWM that is 1/3 the beam profile, this is the final step for simulating data
+	def simulate_observation(self, Tsys=0., deltafreq=1e6, deltav=0.): #Calculate noise and smooth the data and noisea by convolving with a 2D gausasian kernel with a FHWM that is 1/3 the beam profile, this is the final step for simulating data
 		if deltav > 0: #If user specifies the size of the spectral element in km/s, use that to calculate deltafreq instead of deltafreq being provided
 				deltafreq = (deltav / 299792.458) * self.freq
-		if not TPOTF: #If not a Total Power OTF map (most observations)...
+		if not self.TPOTF: #If not a Total Power OTF map (most observations)...
 			self.noise = 2.0 * Tsys / (self.exptime * deltafreq)**0.5 #Calulate RMS temperature using Equation 6-5 in the observer's handbook
-		else: #If a Total Power OTF map....
-			self.noise = Tsys * (1.0 + Non**-0.5)**0.5 / (self.exptime * deltafreq)*0.5 #Calculate RMS temp. for TP OTF maps
+		else: #If a Total Power Array OTF map....
+			self.noise = Tsys * (1.0 + self.Non**-0.5)**0.5 / (self.exptime * deltafreq)*0.5 #Calculate RMS temp. for TP OTF maps
 		goodpix = np.isfinite(self.data) & (self.noise > 0.) & np.isfinite(self.noise)
 		s2n_before_convolution = np.nansum(self.data[goodpix] / self.exptime[goodpix]) / (np.nansum(self.noise[goodpix]**2)**0.5)
 		print('S/N before convolution: ',s2n_before_convolution)
@@ -402,19 +437,11 @@ class GREAT_array:
 			self.position(honeycomb_map_position[0], honeycomb_map_position[1]) #Set array position at this step
 			self.paint(skyobj, time=time, cycles=cycles) #Paint the current step to the sky object
 	def array_otf(self, skyobj, nblock_scan=1, nblock_perp=1, x=0, y=0, step=1.0, length=1.0, time=1.0, cycles=1, map_angle=0., direction='x', nscans=2): #Paint a set of array otf blocks in a particular direction (x or y)
-		# if direction.lower() == 'x': #If scan direction is x, the block angle is the same as the map angle
-		# 	block_angle = map_angle
-		# elif direction.lower() == 'y': #If the scan direction is y, simply add 90 degrees to the map angle.  Simple solution, eh?
-		# 	block_angle = map_angle + 90.0
 		block_angle = map_angle #the block angle is the same as the map angle
 		if self.type == 'LFAV' or self.type == 'LFAH': #Set the size (in arcsec) of each block in the scan and perpendicular directions depending on what array is being used
 			array_size = 72.6
-			# length_scan_arcsec = 72.6 * length
-			# length_perp_arcsec = 72.6
 		elif self.type == 'HFA':
 			array_size = 31.6
-			# length_scan_arcsec = 31.6 * length
-			# length_perp_arcsec = 31.6
 		if direction.lower() == 'x':
 			length_scan_x = array_size * length
 			length_scan_y = array_size
