@@ -131,7 +131,7 @@ class aor:
 			self.y = float(instr_data['MapCenterOffsetDec'])
 			self.nod_type = instr_data['NodType'] #'Total_Power', 'Dual_Beam_Switch', ect.
 			if self.nod_type == 'Total_Power':
-				self.Non = int(instr_data['LinesPerOff'])
+				self.Non = float(instr_data['LinesPerOff'])
 		elif self.map_type == 'GREAT_ON_THE_FLY_HONEYCOMB_MAP':
 			self.time = float(instr_data['TimePerPoint'])
 			self.map_angle = float(instr_data['ArrayRotationAngle'])
@@ -139,7 +139,7 @@ class aor:
 			self.y = float(instr_data['TargetOffsetDec'])
 		elif self.map_type == 'GREAT_ON_THE_FLY_ARRAY_MAPPING':
 			self.nod_type = instr_data['NodType'] #'Total_Power', 'Dual_Beam_Switch', ect.
-			self.Non = int(instr_data['LinesPerOff'])
+			self.Non = float(instr_data['LinesPerOff'])
 			self.map_angle = float(instr_data['MapRotationAngle'])
 			self.nscans = int(instr_data['NumFillOTF'])
 			self.x = float(instr_data['MapCenterOffsetRA'])
@@ -240,6 +240,8 @@ class sky:
 		self.freq = 0. #Store latest frequency painted onto this sky object]
 		self.TPOTF = False #Store if this is a Total Power OTF map or not (used for noise calculations)
 		self.Non = 1.0 #Store N_on, used to caculate noise if this is a Total Power OTF map
+		self.x_points = [] #self.x_points and self.y_points are designed to hold x and y coordinates for the centers of individual maps or blocks for later plotting/checking
+		self.y_points = []
 		#self.Tsys = Tsys
 		#self.deltaTa = deltaTa
 		#self.Tsky = Tsky #Ambient temperature for the atmosphere
@@ -255,7 +257,7 @@ class sky:
 		iymin = find_nearest(ymin, self.y_1d)
 		iymax = find_nearest(ymax, self.y_1d)
 		return ixmin, ixmax, iymin, iymax
-	def plot(self, map_type='data', **kwargs): #Generate an expsoure map plot
+	def plot(self, map_type='data', show_points=True, **kwargs): #Generate an expsoure map plot
 		# if np.any(self.signal != 0.): #Error catch to ensure we are not dividing by zero
 		# 	self.normalize()
 		if map_type == 'exposure':
@@ -279,6 +281,8 @@ class sky:
 			pyplot.imshow(self.data, origin='bottom', extent=self.extent, **kwargs)
 			label = r'T_a'
 			title = r'T_a'
+		if show_points: #If user specifies to show points (usually map or block centers), plot them
+			pyplot.plot(self.x_points, self.y_points, 'o', color='red')
 		pyplot.suptitle(title)
 		pyplot.xlabel('Relative RA (arcsec)')
 		pyplot.ylabel('Relative Dec. (arcsec)')
@@ -287,13 +291,16 @@ class sky:
 	# 	scale_by = (self.total_exptime/self.pixel_area) / np.nansum(self.data)
 	# 	self.data *= scale_by
 	# 	self.noise *= scale_by
-	def simulate_observation(self, Tsys=0., deltafreq=1e6, deltav=0.): #Calculate noise and smooth the data and noisea by convolving with a 2D gausasian kernel with a FHWM that is 1/3 the beam profile, this is the final step for simulating data
+	def simulate_observation(self, Tsys=0., deltafreq=1e6, deltav=0., TPOTF=True, Non=1): #Calculate noise and smooth the data and noisea by convolving with a 2D gausasian kernel with a FHWM that is 1/3 the beam profile, this is the final step for simulating data
+		if TPOTF: #If user specifies Total Power OTF, set the proper variables
+			self.TPOTF = True
+			self.Non = Non
 		if deltav > 0: #If user specifies the size of the spectral element in km/s, use that to calculate deltafreq instead of deltafreq being provided
 				deltafreq = (deltav / 299792.458) * self.freq
 		if not self.TPOTF: #If not a Total Power OTF map (most observations)...
-			self.noise = 2.0 * Tsys / (self.exptime * deltafreq)**0.5 #Calulate RMS temperature using Equation 6-5 in the observer's handbook
+			self.noise = (2.0 * Tsys) / ((self.exptime * deltafreq)**0.5) #Calulate RMS temperature using Equation 6-5 in the observer's handbook
 		else: #If a Total Power Array OTF map....
-			self.noise = Tsys * (1.0 + self.Non**-0.5)**0.5 / (self.exptime * deltafreq)*0.5 #Calculate RMS temp. for TP OTF maps
+			self.noise = (Tsys * (1.0 + self.Non**-0.5)**0.5) / ((self.exptime * deltafreq)*0.5) #Calculate RMS temp. for TP OTF maps
 		goodpix = np.isfinite(self.data) & (self.noise > 0.) & np.isfinite(self.noise)
 		s2n_before_convolution = np.nansum(self.data[goodpix] / self.exptime[goodpix]) / (np.nansum(self.noise[goodpix]**2)**0.5)
 		print('S/N before convolution: ',s2n_before_convolution)
@@ -309,6 +316,8 @@ class sky:
 		print('S/N after convolution: ',self.s2n())
 	def input(self, model_shape): #Draw an astropy model shape onto  sigal (e.g. create a model of the "true" signal)
 		self.signal += model_shape(self.x, self.y)
+	def uniform(self, T): #Make sky grid have a uniform signal (mainly used for testing)
+		self.signal[:] = T
 	def downsample(self, factor): #Downsample sky grid by an integer factor (1/2, 1/3, 1/4, ect.) using the astropy function 
 		plate_scale = self.plate_scale * factor #calculate new plate scale
 		nx = int((self.x_range[1]-self.x_range[0])/plate_scale)
@@ -443,13 +452,13 @@ class GREAT_array:
 		elif self.type == 'HFA':
 			array_size = 31.6
 		if direction.lower() == 'x':
-			length_scan_x = array_size * length
+			length_scan_x = array_size * length #- 0.5*step
 			length_scan_y = array_size
 			n_block_x = nblock_scan
 			n_block_y = nblock_perp
 		elif direction.lower() == 'y':
 			length_scan_x = array_size 
-			length_scan_y = array_size * length
+			length_scan_y = array_size * length #- 0.5*step
 			n_block_x = nblock_perp
 			n_block_y = nblock_scan
 		block_y, block_x = np.mgrid[0:n_block_y,0:n_block_x] #Generate block coordinates
@@ -461,8 +470,10 @@ class GREAT_array:
 		rotated_block_y = y + (-sin_block_angle*block_x + cos_block_angle*block_y)
 		for ix in range(n_block_x): #Paint blocks along x direction
 			for iy in range(n_block_y): #Paint blocks along y direction
+				skyobj.x_points.append(rotated_block_x[iy, ix]) #Save center of each block into the sky object for later checking and/or plotting
+				skyobj.y_points.append(rotated_block_y[iy, ix])
 				self.array_otf_block(skyobj, x=rotated_block_x[iy, ix], y=rotated_block_y[iy, ix], step=step, length=length, time=time, cycles=cycles, map_angle=map_angle, direction=direction, nscans=nscans)
-	def array_otf_block(self, skyobj, x=0., y=0., step=1.0, length=1.0, time=1.0, cycles=1, map_angle=0., direction='x', nscans=2): #Paint a single block for an Array OTF Map onto
+	def array_otf_block(self, skyobj, x=0., y=0., step=1.0, length=1.0, time=1.0, cycles=1, map_angle=0., direction='x', nscans=2, TPOTF=False, Non=1): #Paint a single block for an Array OTF Map onto
 		if self.type == 'LFAV' or self.type == 'LFAH': #Set length of block in arcseconds to be length * array size
 			length_arcsec = length * 72.6
 			scan_spacing = 72.6 / (7.0 * nscans)
