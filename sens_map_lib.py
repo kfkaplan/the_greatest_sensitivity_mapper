@@ -109,12 +109,13 @@ class aor:
 		self.cycles = float(instr_data['Repeat'])
 		self.array_angle = float(instr_data['ArrayRotationAngle'])
 		frequencies = [] #Grab  frequencies 1,2,3,4,5
-		frequencies.append(float(instr_data['Frequency'])) #HFA
-		frequencies.append(float(instr_data['Frequency2'])) #4G1
-		frequencies.append(float(instr_data['Frequency3'])) #4G2
-		frequencies.append(float(instr_data['Frequency4'])) #4G3 or LFAH
-		frequencies.append(float(instr_data['Frequency5'])) #4G4 or LFAV
+		frequencies.append(float(instr_data['Frequency']) * 1e9) #HFA
+		frequencies.append(float(instr_data['Frequency2']) * 1e9) #4G1
+		frequencies.append(float(instr_data['Frequency3']) * 1e9) #4G2
+		frequencies.append(float(instr_data['Frequency4']) * 1e9) #4G3 or LFAH
+		frequencies.append(float(instr_data['Frequency5']) * 1e9) #4G4 or LFAV
 		self.frequencies = frequencies #
+		self.aor_id = instr_data['aorID'] #Carry the aor ID through so it is easier to identify what is what
 		if self.map_type == 'GREAT_SP': #Grab mapping parameters
 			self.time = 0.5 * float(instr_data['TotalTime'])
 			self.x = float(instr_data['TargetOffsetRA'])
@@ -291,7 +292,7 @@ class sky:
 	# 	scale_by = (self.total_exptime/self.pixel_area) / np.nansum(self.data)
 	# 	self.data *= scale_by
 	# 	self.noise *= scale_by
-	def simulate_observation(self, Tsys=0., deltafreq=1e6, deltav=0., TPOTF=True, Non=1): #Calculate noise and smooth the data and noisea by convolving with a 2D gausasian kernel with a FHWM that is 1/3 the beam profile, this is the final step for simulating data
+	def simulate_observation(self, Tsys=0., deltafreq=1e6, deltav=0., TPOTF=False, Non=1): #Calculate noise and smooth the data and noisea by convolving with a 2D gausasian kernel with a FHWM that is 1/3 the beam profile, this is the final step for simulating data
 		if TPOTF: #If user specifies Total Power OTF, set the proper variables
 			self.TPOTF = True
 			self.Non = Non
@@ -300,7 +301,7 @@ class sky:
 		if not self.TPOTF: #If not a Total Power OTF map (most observations)...
 			self.noise = (2.0 * Tsys) / ((self.exptime * deltafreq)**0.5) #Calulate RMS temperature using Equation 6-5 in the observer's handbook
 		else: #If a Total Power Array OTF map....
-			self.noise = (Tsys * (1.0 + self.Non**-0.5)**0.5) / ((self.exptime * deltafreq)*0.5) #Calculate RMS temp. for TP OTF maps
+			self.noise = Tsys * (1.0 + self.Non**-0.5)**0.5 / (self.exptime * deltafreq)**0.5 #Calculate RMS temp. for TP OTF maps
 		goodpix = np.isfinite(self.data) & (self.noise > 0.) & np.isfinite(self.noise)
 		s2n_before_convolution = np.nansum(self.data[goodpix] / self.exptime[goodpix]) / (np.nansum(self.noise[goodpix]**2)**0.5)
 		print('S/N before convolution: ',s2n_before_convolution)
@@ -417,10 +418,14 @@ class GREAT_array:
 		# 	skyobj.exptime[iy1:iy2, ix1:ix2] += time * cycles * chunk_of_array_profile #Convolve the exposure time with the profile for this particular pixel
 		# 	skyobj.fwhm = std2fwhm(self.array_profile.x_stddev) #Copy beam profile FWHM to sky object for later using to determine the convolution kernel to smooth with
 	def single_point(self, skyobj, x=0., y=0., time=1.0, array_angle=0., cycles=1): #Paint a single point observation onto the sky object	
+		if self.freq > 0.: #Pass through the frequency to the sky object if it is specified for this array
+			skyobj.freq = self.freq
 		self.rotate(array_angle) #Set rotation angle
 		self.position(x, y) #Set central position for the single pointing
 		self.paint(skyobj, time=time, cycles=cycles) #Paint the single pointing to the sky object
 	def map(self, skyobj, x=0., y=0., nx=1, ny=1, dx=1.0, dy=1.0, time=1.0, cycles=1, array_angle=0., map_angle=0.): #Paint a raster or OFT map observation onto the sky object
+		if self.freq > 0.: #Pass through the frequency to the sky object if it is specified for this array
+			skyobj.freq = self.freq
 		self.rotate(array_angle) #Set rotation angle
 		map_y, map_x = np.mgrid[0:ny,0:nx] #Generate map coordinates
 		map_x = (map_x - 0.5*(nx-1.0))*dx #Center map and scale map coordinates to the proper step size
@@ -434,6 +439,8 @@ class GREAT_array:
 				self.position(rotated_map_x[iy,ix], rotated_map_y[iy,ix]) #Set array position at this step
 				self.paint(skyobj, time=time, cycles=cycles) #Paint the current step to the sky object
 	def honeycomb(self, skyobj, x=0., y=0., time=1.0, cycles=1, array_angle=0., map_angle=0.):
+		if self.freq > 0.: #Pass through the frequency to the sky object if it is specified for this array
+			skyobj.freq = self.freq
 		self.rotate(array_angle) #Set rotation angle
 		if self.type == 'LFAV' or self.type == 'LFAH': #Set multiplier for honeycomb offsets based on which array you are using
 			honeycomb_multiplier = 6.34
@@ -446,6 +453,8 @@ class GREAT_array:
 			self.position(honeycomb_map_position[0], honeycomb_map_position[1]) #Set array position at this step
 			self.paint(skyobj, time=time, cycles=cycles) #Paint the current step to the sky object
 	def array_otf(self, skyobj, nblock_scan=1, nblock_perp=1, x=0, y=0, step=1.0, length=1.0, time=1.0, cycles=1, map_angle=0., direction='x', nscans=2): #Paint a set of array otf blocks in a particular direction (x or y)
+		if self.freq > 0.: #Pass through the frequency to the sky object if it is specified for this array
+			skyobj.freq = self.freq
 		block_angle = map_angle #the block angle is the same as the map angle
 		if self.type == 'LFAV' or self.type == 'LFAH': #Set the size (in arcsec) of each block in the scan and perpendicular directions depending on what array is being used
 			array_size = 72.6
@@ -482,14 +491,14 @@ class GREAT_array:
 			scan_spacing = 31.6 / (7.0 * nscans)
 		if direction.lower() == 'x': 
 			array_angle = -19.1 + map_angle #Set array angle to always be -19.1 for x-direction array OTF maps (note this angle is relative to the map angle)
-			nx = int(length_arcsec/step)
+			nx = np.ceil(length_arcsec/step).astype('int') #Note that observations round the number of steps per block scan up so we use np.ceil
 			ny = nscans
 			dx = step
 			dy = scan_spacing
 		elif direction.lower() == 'y':
 			array_angle  = 10.9 + map_angle #Set array angle to always be +10.9 for y-direction array OTF maps (note this angle is relative to the map angle)
 			nx = nscans
-			ny = int(length_arcsec/step)
+			ny = np.ceil(length_arcsec/step).astype('int') #Note that observations round the number of steps per block scan up so we use np.ceil
 			dx = scan_spacing
 			dy = step
 		else:
@@ -518,7 +527,7 @@ class GREAT_array:
 
 #Child class to store array profile for the LFA
 class LFAH_array(GREAT_array):
-	def __init__(self, fwhm=14.1, type='LFAH', amplitude=1.0, r=31.8, angle=0., freq=1897.420):
+	def __init__(self, fwhm=14.1, type='LFAH', amplitude=1.0, r=31.8, angle=0., freq=1897.420e9):
 		stddev = fwhm2std(fwhm) #Convert FWHM to stddev
 		#Defines the profile for each pixel in a hexagon pattern, relative pixel positions in a hexagon are from https://www.quora.com/How-can-you-find-the-coordinates-in-a-hexagon
 		pix0 =  models.Gaussian2D(amplitude=amplitude, x_mean=0.0, y_mean=0.0, x_stddev=stddev, y_stddev=stddev)
@@ -541,7 +550,7 @@ class LFAH_array(GREAT_array):
 
 #Child class to store array profile for the LFA
 class LFAV_array(GREAT_array):
-	def __init__(self, fwhm=14.1, type='LFAV', amplitude=1.0, r=31.8, angle=0., freq=1897.420):
+	def __init__(self, fwhm=14.1, type='LFAV', amplitude=1.0, r=31.8, angle=0., freq=1897.420e9):
 		stddev = fwhm2std(fwhm) #Convert FWHM to stddev
 		#Defines the profile for each pixel in a hexagon pattern, relative pixel positions in a hexagon are from https://www.quora.com/How-can-you-find-the-coordinates-in-a-hexagon
 		pix0 =  models.Gaussian2D(amplitude=amplitude, x_mean=0.0, y_mean=0.0, x_stddev=stddev, y_stddev=stddev)
@@ -565,7 +574,7 @@ class LFAV_array(GREAT_array):
 		
 #Child class to store array profile for the HFA
 class HFA_array(GREAT_array):
-	def __init__(self, fwhm=6.3, type='HFA', amplitude=1.0, r=13.6, angle=0., freq=4744.77749):
+	def __init__(self, fwhm=6.3, type='HFA', amplitude=1.0, r=13.6, angle=0., freq=4744.77749e9):
 		stddev = fwhm2std(fwhm) #Convert FWHM to stddev
 		#Defines the profile for each pixel in a hexagon pattern, relative pixel positions in a hexagon are from https://www.quora.com/How-can-you-find-the-coordinates-in-a-hexagon
 		pix0 =  models.Gaussian2D(amplitude=amplitude, x_mean=0.0, y_mean=0.0, x_stddev=stddev, y_stddev=stddev)
@@ -587,7 +596,7 @@ class HFA_array(GREAT_array):
 
 #Child class to store array profile for 4GREAT 1, FWHM is from the ICD
 class FG1_array(GREAT_array):
-	def __init__(self, fwhm=50.0, type='4G1', amplitude=1.0, freq=550.0):
+	def __init__(self, fwhm=50.0, type='4G1', amplitude=1.0, freq=550.0e9):
 		stddev = fwhm2std(fwhm) #Convert FWHM to stddev
 		pix0 =  models.Gaussian2D(amplitude=amplitude, x_mean=0.0, y_mean=0.0, x_stddev=stddev, y_stddev=stddev) #Define pixel profile
 		self.array_profile = [pix0]
@@ -603,7 +612,7 @@ class FG1_array(GREAT_array):
 
 #Child class to store array profile for 4GREAT 1, FWHM is from the ICD
 class FG2_array(GREAT_array):
-	def __init__(self, fwhm=30.0, type='4G2', amplitude=1.0, freq=980.0):
+	def __init__(self, fwhm=30.0, type='4G2', amplitude=1.0, freq=980.0e9):
 		stddev = fwhm2std(fwhm) #Convert FWHM to stddev
 		pix0 =  models.Gaussian2D(amplitude=amplitude, x_mean=0.0, y_mean=0.0, x_stddev=stddev, y_stddev=stddev) #Define pixel profile
 		self.array_profile = [pix0]
@@ -618,7 +627,7 @@ class FG2_array(GREAT_array):
 
 #Child class to store array profile for 4GREAT 1, FWHM is from the ICD
 class FG3_array(GREAT_array):
-	def __init__(self, fwhm=19.0, type='4G3', amplitude=1.0, freq=1390.0):
+	def __init__(self, fwhm=19.0, type='4G3', amplitude=1.0, freq=1390.0e9):
 		stddev = fwhm2std(fwhm) #Convert FWHM to stddev
 		pix0 =  models.Gaussian2D(amplitude=amplitude, x_mean=0.0, y_mean=0.0, x_stddev=stddev, y_stddev=stddev) #Define pixel profile
 		self.array_profile = [pix0]
@@ -633,7 +642,7 @@ class FG3_array(GREAT_array):
 
 #Child class to store array profile for 4GREAT 1, FWHM is from the ICD
 class FG4_array(GREAT_array):
-	def __init__(self, fwhm=11.0, type='4G4', amplitude=1.0, freq=2540.0):
+	def __init__(self, fwhm=11.0, type='4G4', amplitude=1.0, freq=2540.0e9):
 		stddev = fwhm2std(fwhm) #Convert FWHM to stddev
 		pix0 =  models.Gaussian2D(amplitude=amplitude, x_mean=0.0, y_mean=0.0, x_stddev=stddev, y_stddev=stddev) #Define pixel profile
 		self.array_profile = [pix0]
