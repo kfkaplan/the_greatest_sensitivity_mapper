@@ -52,11 +52,11 @@ honeycomb_pattern = np.array([
 
 
 def fwhm2std(fwhm): #Convert FWHM to stddev (for a gaussian)
-	return   fwhm / (2.0 * np.sqrt(np.log(2.0)))
+	return   fwhm / (2.0 * np.sqrt(2.0 * np.log(2.0)))
 
 
 def std2fwhm(stddev): #Convert stddev to FWHM  (for a gaussian)
-	return   stddev * (2.0 * np.sqrt(np.log(2.0)))
+	return   stddev * (2.0 * np.sqrt(2.0 * np.log(2.0)))
 
 
 # def get_deltaTa(Tsys=0., deltafreq=1.0, Non=1.0, time=1.0, TPOTF=False): #Get the RMS antenna temperature (delta-Ta) for a single pointing (when time on = time off)
