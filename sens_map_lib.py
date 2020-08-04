@@ -8,15 +8,16 @@ import numpy as np
 import copy
 from scipy.interpolate import interp1d
 from matplotlib import pyplot
-from astropy.io import fits
-from astropy.modeling import models, fitting
-from astropy.convolution import convolve, Gaussian2DKernel
-from astropy.convolution.kernels import Model2DKernel
+#from astropy.io import fits
+from astropy.modeling import models
 #from astropy.coordinates import SkyCoord
 from astropy.nddata.utils import block_reduce
 import xmltodict #For reading in AORs
 
 #import timeit #used for profiling code
+
+
+
 
 
 #Honeycomb pattern from Randolf Klein as a vector with [x,y], The unit is one fifth of the distance between the pixels in each array. 
@@ -57,6 +58,11 @@ def fwhm2std(fwhm): #Convert FWHM to stddev (for a gaussian)
 
 def std2fwhm(stddev): #Convert stddev to FWHM  (for a gaussian)
 	return   stddev * (2.0 * np.sqrt(2.0 * np.log(2.0)))
+
+
+def gauss2d(xpos=0.0, ypos=0.0, x=0.0, y=0.0, stddev=1.0, amplitude=1.0): #2D gaussian kernel (not normalized)
+	return amplitude * np.exp(-((xpos-x)**2 + (ypos-y)**2) / (2.0 * stddev**2))
+
 
 
 # def get_deltaTa(Tsys=0., deltafreq=1.0, Non=1.0, time=1.0, TPOTF=False): #Get the RMS antenna temperature (delta-Ta) for a single pointing (when time on = time off)
@@ -225,6 +231,8 @@ class sky:
 		y += y_range[0]
 		self.x_range = x_range #Save x,y ranges and plate scale
 		self.y_range = y_range
+		self.nx = nx
+		self.ny = ny
 		self.plate_scale = plate_scale
 		self.data = data #This is the actual 2D array that stores the simulated data (in units of T_a)
 		self.noise = noise #This is the 2D noise array for the data (in units of delta-T_a)
@@ -241,8 +249,13 @@ class sky:
 		self.freq = 0. #Store latest frequency painted onto this sky object]
 		self.TPOTF = False #Store if this is a Total Power OTF map or not (used for noise calculations)
 		self.Non = 1.0 #Store N_on, used to caculate noise if this is a Total Power OTF map
-		self.x_points = [] #self.x_points and self.y_points are designed to hold x and y coordinates for the centers of individual maps or blocks for later plotting/checking
-		self.y_points = []
+		self.x_map_center_points = [] #self.x_map_center_points and self.y_map_cete_points are designed to hold x and y coordinates for the centers of individual maps or blocks for later plotting/checking
+		self.y_map_center_points = []
+		self.total_time = 0. #Track the total time integrated by summing up all the pointings
+		self.x_beam = [] #Lists that store the x position, y position, exposure time, and convolved signal for each "beam" to later paint onto the sky object when simulating an observation
+		self.y_beam = []
+		self.exptime_beam = []
+		self.signal_beam = []
 		#self.Tsys = Tsys
 		#self.deltaTa = deltaTa
 		#self.Tsky = Tsky #Ambient temperature for the atmosphere
@@ -252,6 +265,10 @@ class sky:
 		self.data[:] = 0.
 		self.exptime[:] = 0.
 		self.noise[:] = 0.
+		self.x_beam = []
+		self.y_beam = []
+		self.exptime_beam = []
+		self.signal_beam = []
 	def get_range_indicies(self, xmin, xmax, ymin, ymax): #Returns the index numbers for a range of (xmin, xmax, ymin, ymax)
 		ixmin = find_nearest(xmin, self.x_1d)
 		ixmax = find_nearest(xmax, self.x_1d)
@@ -283,7 +300,7 @@ class sky:
 			label = r'T_a'
 			title = r'T_a'
 		if show_points: #If user specifies to show points (usually map or block centers), plot them
-			pyplot.plot(self.x_points, self.y_points, 'o', color='red')
+			pyplot.plot(self.x_map_center_points, self.y_map_center_points, 'o', color='red')
 		pyplot.suptitle(title)
 		pyplot.xlabel('Relative RA (arcsec)')
 		pyplot.ylabel('Relative Dec. (arcsec)')
@@ -293,27 +310,26 @@ class sky:
 	# 	self.data *= scale_by
 	# 	self.noise *= scale_by
 	def simulate_observation(self, Tsys=0., deltafreq=1e6, deltav=0., TPOTF=False, Non=1): #Calculate noise and smooth the data and noisea by convolving with a 2D gausasian kernel with a FHWM that is 1/3 the beam profile, this is the final step for simulating data
+		one_third_stddev = fwhm2std(self.fwhm) / 3.0 #Set up convolving kerneal for cygrid to be a 2D guassian with 1/3 the FWHM of the beam profiles
+		x_array = np.array(self.x_beam) 
+		y_array = np.array(self.y_beam)
+		signal_array = np.array(self.signal_beam)
+		exptime_array = np.array(self.exptime_beam)
+		for ix, x in enumerate(self.x_1d): #Loop through each pixel in the sky object and use a kernel with 1/3 the FWHM of the beam size to 
+			for iy, y in enumerate(self.y_1d):
+				weights = gauss2d(xpos=x_array, ypos=y_array, x=x, y=y, stddev=one_third_stddev) #Generate weights for this position using the kernel
+				self.data[iy, ix] += np.nansum(signal_array * weights) #Convolve simualted signal on sky with kernel to claculate signal at this pixel
+				self.exptime[iy, ix] += np.nansum(exptime_array * weights) #Convolve exposure time with kernel to calulate the exposure time for this specific pixel
 		if TPOTF: #If user specifies Total Power OTF, set the proper variables
 			self.TPOTF = True
 			self.Non = Non
 		if deltav > 0: #If user specifies the size of the spectral element in km/s, use that to calculate deltafreq instead of deltafreq being provided
 				deltafreq = (deltav / 299792.458) * self.freq
 		if not self.TPOTF: #If not a Total Power OTF map (most observations)...
-			self.noise = (2.0 * Tsys) / ((self.exptime * deltafreq)**0.5) #Calulate RMS temperature using Equation 6-5 in the observer's handbook
+			self.noise = (2.0 * Tsys) / ((self.exptime * deltafreq)**0.5) #Calulate RMS temperature (noise) using Equation 6-5 in the observer's handbook
 		else: #If a Total Power Array OTF map....
-			self.noise = Tsys * (1.0 + self.Non**-0.5)**0.5 / (self.exptime * deltafreq)**0.5 #Calculate RMS temp. for TP OTF maps
-		goodpix = np.isfinite(self.data) & (self.noise > 0.) & np.isfinite(self.noise)
-		s2n_before_convolution = np.nansum(self.data[goodpix] / self.exptime[goodpix]) / (np.nansum(self.noise[goodpix]**2)**0.5)
-		print('S/N before convolution: ',s2n_before_convolution)
-		stddev = fwhm2std(self.fwhm) / (3.0 * self.plate_scale)
-		kernel = Gaussian2DKernel(x_stddev=stddev, y_stddev=stddev) #Define the gaussian kernel to be 1/3 the FWHM of the beam profile
-		square_gaussian_model = models.Gaussian2D(amplitude=1.0/(2.0*np.pi*stddev**2), x_stddev=stddev/np.sqrt(2), y_stddev=stddev/np.sqrt(2)) #Create a kernel that is a square of the original gaussian kernel, for propogation of uncertainity (noise)
-		kernel_squared =Model2DKernel(square_gaussian_model, x_size=5, y_size=5)
-		#kernel_squared = kernel
-		self.data = convolve(self.data, kernel) #Apply convolution to the data
-		self.noise = convolve(self.noise**2, kernel_squared)**0.5 #Apply convolution to the variance and convert back to noise
-		self.exptime = convolve(self.exptime, kernel) #Apply convolution to the exposure time map
-		self.data = self.data / self.exptime #normalize by exposure time
+			self.noise = Tsys * (1.0 + self.Non**-0.5)**0.5 / (self.exptime * deltafreq)**0.5 #Calculate RMS temp. (noise) for TP OTF maps
+		self.data = self.data / self.exptime #normalize simulated data by exposure time
 		print('S/N after convolution: ',self.s2n())
 	def input(self, model_shape): #Draw an astropy model shape onto  sigal (e.g. create a model of the "true" signal)
 		self.signal += model_shape(self.x, self.y)
@@ -393,6 +409,7 @@ class GREAT_array:
 	def paint(self, skyobj, time=1.0, cycles=1, TPOTF=False): #Paint a single instance of the array profile onto a sky object, this is the base for all observation types including single pointing and maps
 		#skyobj.total_exptime += time*cycles #Add exposure time from this to the total
 		# deltaTa = get_deltaTa(Tsys=Tsys, TPOTF=TPOTF) #Get RMS antenna temperature 
+		skyobj.fwhm = std2fwhm(self.array_profile[0].x_stddev) #Copy beam profile FWHM to sky object for later using to determine the convolution kernel to smooth with
 		sky_xmax, sky_xmin, sky_ymin, sky_ymax = skyobj.extent #Grab limits of the sky coordinates
 		paint_xmin, paint_xmax = self.x - self.range, self.x + self.range #Calculate coordinate range to paint (this is for optimization)
 		paint_ymin, paint_ymax = self.y - self.range, self.y + self.range
@@ -402,21 +419,42 @@ class GREAT_array:
 		if paint_ymax > sky_ymax: paint_ymax = sky_ymax
 		ix2, ix1, iy1, iy2 = skyobj.get_range_indicies(paint_xmin, paint_xmax, paint_ymin, paint_ymax)  #Grab the indicies for the pixels on the sky over witch to paint onto (NOTE: x axis is inverted because RA increases to the left)
 		chunk_of_signal = skyobj.signal[iy1:iy2, ix1:ix2] #Isolate the chunk of the signal array for painting at this particular position
-		#chunk_of_noise = skyobj.noise[iy1:iy2, ix1:ix2]
-		# if np.size(self.array_profile) > 1: #If LFA or HFA
-		for this_array_profile in self.array_profile: #Loop through each individual pixel
-			chunk_of_array_profile = this_array_profile(skyobj.x[iy1:iy2, ix1:ix2], skyobj.y[iy1:iy2, ix1:ix2]) #Isolate the piece of the array profile to use 
+		for this_array_profile in self.array_profile: #Loop through each individual beam in array
+			chunk_of_array_profile = this_array_profile(skyobj.x[iy1:iy2, ix1:ix2], skyobj.y[iy1:iy2, ix1:ix2]) #Isolate the beam profile on the sky to use 
 			sum_chunk_of_array_profile = np.nansum(chunk_of_array_profile)
-			convolved_signal = chunk_of_array_profile *  np.nansum(chunk_of_signal * chunk_of_array_profile) / sum_chunk_of_array_profile
-			skyobj.data[iy1:iy2, ix1:ix2] += convolved_signal * time * cycles #Convolve pattern with expected signal and paint result onto the sky
-			skyobj.exptime[iy1:iy2, ix1:ix2] += time * cycles * chunk_of_array_profile #Convolve the exposure time with the profile for this particular pixel
-		skyobj.fwhm = std2fwhm(self.array_profile[0].x_stddev) #Copy beam profile FWHM to sky object for later using to determine the convolution kernel to smooth with
-		# else: #Else if 4GREAT
-		# 	chunk_of_array_profile = self.array_profile(skyobj.x[iy1:iy2, ix1:ix2], skyobj.y[iy1:iy2, ix1:ix2]) #Isolate the piece of the array profile to use 
-		# 	convolved_signal = chunk_of_array_profile * np.nansum(chunk_of_signal * chunk_of_array_profile) / np.nansum(chunk_of_array_profile) #Convolve the signal with the profile for this particular pixel
-		# 	skyobj.data[iy1:iy2, ix1:ix2] += convolved_signal * time * cycles #Convolve pattern with expected signal and paint result onto the sky
-		# 	skyobj.exptime[iy1:iy2, ix1:ix2] += time * cycles * chunk_of_array_profile #Convolve the exposure time with the profile for this particular pixel
-		# 	skyobj.fwhm = std2fwhm(self.array_profile.x_stddev) #Copy beam profile FWHM to sky object for later using to determine the convolution kernel to smooth with
+			convolved_signal = np.nansum(chunk_of_signal * chunk_of_array_profile) / sum_chunk_of_array_profile #Convovle assumed signal on sky with beam profile
+			skyobj.x_beam.append(this_array_profile.x_mean.value) #Save position, convolved signal, and exposure time for each beam in a list of the sky object for later regridding
+			skyobj.y_beam.append(this_array_profile.y_mean.value)
+			skyobj.exptime_beam.append(time * cycles)
+			skyobj.signal_beam.append(convolved_signal * time * cycles)
+	##### backup of old paint method
+	# def paint(self, skyobj, time=1.0, cycles=1, TPOTF=False): #Paint a single instance of the array profile onto a sky object, this is the base for all observation types including single pointing and maps
+	# 	#skyobj.total_exptime += time*cycles #Add exposure time from this to the total
+	# 	# deltaTa = get_deltaTa(Tsys=Tsys, TPOTF=TPOTF) #Get RMS antenna temperature 
+	# 	sky_xmax, sky_xmin, sky_ymin, sky_ymax = skyobj.extent #Grab limits of the sky coordinates
+	# 	paint_xmin, paint_xmax = self.x - self.range, self.x + self.range #Calculate coordinate range to paint (this is for optimization)
+	# 	paint_ymin, paint_ymax = self.y - self.range, self.y + self.range
+	# 	if paint_xmin < sky_xmin: paint_xmin = sky_xmin #Bring coordinate ranges within bounds if they fall outside of sky object's bounds
+	# 	if paint_ymin < sky_ymin: paint_ymin = sky_ymin
+	# 	if paint_xmax > sky_xmax: paint_xmax = sky_xmax
+	# 	if paint_ymax > sky_ymax: paint_ymax = sky_ymax
+	# 	ix2, ix1, iy1, iy2 = skyobj.get_range_indicies(paint_xmin, paint_xmax, paint_ymin, paint_ymax)  #Grab the indicies for the pixels on the sky over witch to paint onto (NOTE: x axis is inverted because RA increases to the left)
+	# 	chunk_of_signal = skyobj.signal[iy1:iy2, ix1:ix2] #Isolate the chunk of the signal array for painting at this particular position
+	# 	#chunk_of_noise = skyobj.noise[iy1:iy2, ix1:ix2]
+	# 	# if np.size(self.array_profile) > 1: #If LFA or HFA
+	# 	for this_array_profile in self.array_profile: #Loop through each individual pixel
+	# 		chunk_of_array_profile = this_array_profile(skyobj.x[iy1:iy2, ix1:ix2], skyobj.y[iy1:iy2, ix1:ix2]) #Isolate the piece of the array profile to use 
+	# 		sum_chunk_of_array_profile = np.nansum(chunk_of_array_profile)
+	# 		convolved_signal = chunk_of_array_profile *  np.nansum(chunk_of_signal * chunk_of_array_profile) / sum_chunk_of_array_profile
+	# 		skyobj.data[iy1:iy2, ix1:ix2] += convolved_signal * time * cycles #Convolve pattern with expected signal and paint result onto the sky
+	# 		skyobj.exptime[iy1:iy2, ix1:ix2] += time * cycles * chunk_of_array_profile #Convolve the exposure time with the profile for this particular pixel
+	# 	skyobj.fwhm = std2fwhm(self.array_profile[0].x_stddev) #Copy beam profile FWHM to sky object for later using to determine the convolution kernel to smooth with
+	# 	# else: #Else if 4GREAT
+	# 	# 	chunk_of_array_profile = self.array_profile(skyobj.x[iy1:iy2, ix1:ix2], skyobj.y[iy1:iy2, ix1:ix2]) #Isolate the piece of the array profile to use 
+	# 	# 	convolved_signal = chunk_of_array_profile * np.nansum(chunk_of_signal * chunk_of_array_profile) / np.nansum(chunk_of_array_profile) #Convolve the signal with the profile for this particular pixel
+	# 	# 	skyobj.data[iy1:iy2, ix1:ix2] += convolved_signal * time * cycles #Convolve pattern with expected signal and paint result onto the sky
+	# 	# 	skyobj.exptime[iy1:iy2, ix1:ix2] += time * cycles * chunk_of_array_profile #Convolve the exposure time with the profile for this particular pixel
+	# 	# 	skyobj.fwhm = std2fwhm(self.array_profile.x_stddev) #Copy beam profile FWHM to sky object for later using to determine the convolution kernel to smooth with
 	def single_point(self, skyobj, x=0., y=0., time=1.0, array_angle=0., cycles=1): #Paint a single point observation onto the sky object	
 		if self.freq > 0.: #Pass through the frequency to the sky object if it is specified for this array
 			skyobj.freq = self.freq
@@ -479,8 +517,8 @@ class GREAT_array:
 		rotated_block_y = y + (-sin_block_angle*block_x + cos_block_angle*block_y)
 		for ix in range(n_block_x): #Paint blocks along x direction
 			for iy in range(n_block_y): #Paint blocks along y direction
-				skyobj.x_points.append(rotated_block_x[iy, ix]) #Save center of each block into the sky object for later checking and/or plotting
-				skyobj.y_points.append(rotated_block_y[iy, ix])
+				skyobj.x_map_center_points.append(rotated_block_x[iy, ix]) #Save center of each block into the sky object for later checking and/or plotting
+				skyobj.y_map_center_points.append(rotated_block_y[iy, ix])
 				self.array_otf_block(skyobj, x=rotated_block_x[iy, ix], y=rotated_block_y[iy, ix], step=step, length=length, time=time, cycles=cycles, map_angle=map_angle, direction=direction, nscans=nscans)
 	def array_otf_block(self, skyobj, x=0., y=0., step=1.0, length=1.0, time=1.0, cycles=1, map_angle=0., direction='x', nscans=2, TPOTF=False, Non=1): #Paint a single block for an Array OTF Map onto
 		if self.type == 'LFAV' or self.type == 'LFAH': #Set length of block in arcseconds to be length * array size
@@ -504,10 +542,6 @@ class GREAT_array:
 		else:
 			print('ERROR: Array OTF block direction needs to be specified as x or y.')
 		self.map(skyobj, x=x, y=y, nx=nx, ny=ny, dx=dx, dy=dy, time=time, cycles=cycles, array_angle=array_angle, map_angle=map_angle) #Paint a map
-
-
-
-
 	# def get_deltaTa_singlepoint(self, deltafreq=1.0, time=1.0): #Get the RMS antenna temperature (delta-Ta) for a single pointing (when time on = time off)
 	# 	deltaTa = 2.0 * self.get_Tsys() / (time * deltafreq)**0.5 #Equation 6-5 in the observer's handbook
 	# 	return deltaTa
