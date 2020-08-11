@@ -13,10 +13,15 @@ from astropy.modeling import models
 #from astropy.coordinates import SkyCoord
 from astropy.nddata.utils import block_reduce
 import xmltodict #For reading in AORs
-
 #import timeit #used for profiling code
 
 
+try:  #Try to import bottleneck library, this greatly speeds up things such as nanmedian, nanmax, and nanmin
+	import bottleneck as bn #Library to speed up some numpy routines
+except ImportError:
+	print("Bottleneck library not installed.  Code will still run but might be slower.  You can try to bottleneck with 'conda install bottleneck' or 'pip install bottleneck' for a speed up.")
+	import numpy as bn
+import matplotlib.gridspec as grd
 
 
 
@@ -318,8 +323,8 @@ class sky:
 		for ix, x in enumerate(self.x_1d): #Loop through each pixel in the sky object and use a kernel with 1/3 the FWHM of the beam size to 
 			for iy, y in enumerate(self.y_1d):
 				weights = gauss2d(xpos=x_array, ypos=y_array, x=x, y=y, stddev=one_third_stddev) #Generate weights for this position using the kernel
-				self.data[iy, ix] += np.nansum(signal_array * weights) #Convolve simualted signal on sky with kernel to claculate signal at this pixel
-				self.exptime[iy, ix] += np.nansum(exptime_array * weights) #Convolve exposure time with kernel to calulate the exposure time for this specific pixel
+				self.data[iy, ix] += bn.nansum(signal_array * weights) #Convolve simualted signal on sky with kernel to claculate signal at this pixel
+				self.exptime[iy, ix] += bn.nansum(exptime_array * weights) #Convolve exposure time with kernel to calulate the exposure time for this specific pixel
 		if TPOTF: #If user specifies Total Power OTF, set the proper variables
 			self.TPOTF = True
 			self.Non = Non
@@ -347,14 +352,14 @@ class sky:
 		self.y = y #2D y coords
 		self.x_1d = self.x[0,:] #Grab 1D arrays for x and y coordinates
 		self.y_1d = self.y[:,0]
-		self.data = block_reduce(self.data, factor, func=np.mean) #Resample all grids using astropy block_reduce
-		self.noise = block_reduce(self.noise**2, factor, func=np.mean)**0.5 / factor #Note the 1/factor is actually 1/sqrt(factor*^2) since factor^2 is the number of pixels being averaged together
-		self.exptime = block_reduce(self.exptime, factor, func=np.mean)
-		self.signal = block_reduce(self.signal, factor, func=np.mean)
+		self.data = block_reduce(self.data, factor, func=np.nanmean) #Resample all grids using astropy block_reduce
+		self.noise = block_reduce(self.noise**2, factor, func=np.nanmean)**0.5 / factor #Note the 1/factor is actually 1/sqrt(factor*^2) since factor^2 is the number of pixels being averaged together
+		self.exptime = block_reduce(self.exptime, factor, func=np.nanmean)
+		self.signal = block_reduce(self.signal, factor, func=np.nanmean)
 	def s2n(self): #Return total signal-to-noise value as a sanity check
 		goodpix = np.isfinite(self.noise)
-		total_signal = np.nansum(self.data[goodpix])
-		total_noise = np.nansum(self.noise[goodpix]**2)**0.5
+		total_signal = bn.nansum(self.data[goodpix])
+		total_noise = bn.nansum(self.noise[goodpix]**2)**0.5
 		print(total_signal, total_noise)
 		return total_signal / total_noise
 
@@ -421,8 +426,8 @@ class GREAT_array:
 		chunk_of_signal = skyobj.signal[iy1:iy2, ix1:ix2] #Isolate the chunk of the signal array for painting at this particular position
 		for this_array_profile in self.array_profile: #Loop through each individual beam in array
 			chunk_of_array_profile = this_array_profile(skyobj.x[iy1:iy2, ix1:ix2], skyobj.y[iy1:iy2, ix1:ix2]) #Isolate the beam profile on the sky to use 
-			sum_chunk_of_array_profile = np.nansum(chunk_of_array_profile)
-			convolved_signal = np.nansum(chunk_of_signal * chunk_of_array_profile) / sum_chunk_of_array_profile #Convovle assumed signal on sky with beam profile
+			sum_chunk_of_array_profile = bn.nansum(chunk_of_array_profile)
+			convolved_signal = bn.nansum(chunk_of_signal * chunk_of_array_profile) / sum_chunk_of_array_profile #Convovle assumed signal on sky with beam profile
 			skyobj.x_beam.append(this_array_profile.x_mean.value) #Save position, convolved signal, and exposure time for each beam in a list of the sky object for later regridding
 			skyobj.y_beam.append(this_array_profile.y_mean.value)
 			skyobj.exptime_beam.append(time * cycles)
