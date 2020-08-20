@@ -289,21 +289,22 @@ class sky:
 			title = r'Exposure Time (s)'
 		elif map_type == 'signal': # if signal is set to true, plot the modeled signal instead
 			pyplot.imshow(self.signal, origin='bottom', extent=self.extent, **kwargs)
-			label = r'T_a'
-			title = r'Signal (T_a)'
+			label = r'$T_a$'
+			title = r'Signal ($T_a$)'
 		elif map_type == 'noise':
 			min_noise = np.nanmin(self.noise)
 			pyplot.imshow(self.noise, origin='bottom', extent=self.extent, vmax=min_noise*1.5, vmin=min_noise, **kwargs)
-			label = r'\Delta T_a'
-			title = r'Noise (\Delta Ta)'
+			label = r'$\Delta T_a$'
+			title = r'Noise ($\Delta T_a$)'
 		elif map_type == 's2n': #If s2n is true, plot the signal-to-noise
 			pyplot.imshow(self.data/self.noise, origin='bottom', extent=self.extent, **kwargs)
 			label = r'S/N'
 			title = r'S/N'
 		else: #Normally plot the simulated data
-			pyplot.imshow(self.data, origin='bottom', extent=self.extent, **kwargs)
-			label = r'T_a'
-			title = r'T_a'
+			min_Ta = 0.9 * bn.nanmin(self.data[np.isfinite(self.data)]) #Fix colorbar scale, especially for a uniform background
+			pyplot.imshow(self.data, origin='bottom', extent=self.extent, vmin=min_Ta, **kwargs)
+			label = r'$T_a$'
+			title = r'$T_a$'
 		if show_points: #If user specifies to show points (usually map or block centers), plot them
 			pyplot.plot(self.x_map_center_points, self.y_map_center_points, 'o', color='red')
 		pyplot.suptitle(title)
