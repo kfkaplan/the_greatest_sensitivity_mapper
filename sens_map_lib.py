@@ -239,6 +239,7 @@ class sky:
 		self.y_range = y_range
 		self.nx = nx
 		self.ny = ny
+		self.area = (x_range[1]-x_range[0]) * (y_range[1]-y_range[0]) #Area of sky in square arcsec
 		self.plate_scale = plate_scale
 		self.data = data #This is the actual 2D array that stores the simulated data (in units of T_a)
 		self.noise = noise #This is the 2D array that stores point sources (narroiw gaussians) for the noise (in units of delta-T_a) which are later convolutionally regridded, we are treating noise like we treat signal
@@ -263,6 +264,7 @@ class sky:
 		self.y_beam = []
 		self.exptime_beam = []
 		self.signal_beam = []
+		self.beam_profiles = []
 		#self.Tsys = Tsys
 		#self.deltaTa = deltaTa
 		#self.Tsky = Tsky #Ambient temperature for the atmosphere
@@ -288,19 +290,22 @@ class sky:
 		if map_type == 'exposure':
 			pyplot.imshow(self.exptime, origin='bottom', extent=self.extent, **kwargs)
 			label = r'Time (s)'
-			title = r'Exposure Time (s)'
+			title = r'Exposure Time Per Square Arcsec (s arcsec$^{-1}$)'
 		elif map_type == 'signal': # if signal is set to true, plot the modeled signal instead
 			pyplot.imshow(self.signal, origin='bottom', extent=self.extent, **kwargs)
 			label = r'$T_a$'
 			title = r'Signal ($T_a$)'
 		elif map_type == 'noise':
-			#min_noise = np.nanmin(self.noise)
-			#pyplot.imshow(self.noise, origin='bottom', extent=self.extent, vmax=min_noise*1.5, vmin=min_noise, **kwargs)
-			pyplot.imshow(self.noise, origin='bottom', extent=self.extent, **kwargs)
+			min_noise = np.nanmin(self.noise)
+			pyplot.imshow(self.noise, origin='bottom', extent=self.extent, vmax=2.0*min_noise, vmin=0.8*min_noise, **kwargs)
+			#pyplot.imshow(self.noise, origin='bottom', extent=self.extent, **kwargs)
 			label = r'$\Delta T_a$'
 			title = r'Noise ($\Delta T_a$)'
 		elif map_type == 's2n': #If s2n is true, plot the signal-to-noise
-			pyplot.imshow(self.data/self.noise, origin='bottom', extent=self.extent, **kwargs)
+			s2n = self.data/self.noise
+			min_s2n = np.nanpercentile(s2n, 5)
+			max_s2n = np.nanpercentile(s2n, 95)
+			pyplot.imshow(s2n, origin='bottom', extent=self.extent, vmax=max_s2n, vmin=min_s2n, **kwargs)
 			label = r'S/N'
 			title = r'S/N'
 		else: #Normally plot the simulated data
@@ -322,36 +327,74 @@ class sky:
 		
 
 
-
-
-
 		one_third_stddev = fwhm2std(self.fwhm) / 3.0 #Set up convolving kerneal for cygrid to be a 2D guassian with 1/3 the FWHM of the beam profiles
 		x_array = np.array(self.x_beam) 
 		y_array = np.array(self.y_beam)
 		signal_array = np.array(self.signal_beam)
 		exptime_array = np.array(self.exptime_beam)
+		convolved_variance = np.zeros(np.shape(self.data))
 
+		noise_array = np.zeros(len(x_array))
+
+
+		#Calculate variance
 		if TPOTF: #If user specifies Total Power OTF, set the proper variables
 			self.TPOTF = True
 			self.Non = Non
 		if deltav > 0: #If user specifies the size of the spectral element in km/s, use that to calculate deltafreq instead of deltafreq being provided
 				deltafreq = (deltav / 299792.458) * self.freq
 		if not self.TPOTF: #If not a Total Power OTF map (most observations)...
-			noise_array = (2.0 * Tsys) / ((deltafreq)**0.5) #Calulate RMS temperature (noise) using Equation 6-5 in the observer's handbook
+			noise = (2.0 * Tsys) / ((deltafreq)**0.5) #Calulate RMS temperature (noise) using Equation 6-5 in the observer's handbook
 		else: #If a Total Power Array OTF map....
-			noise_array = Tsys * (1.0 + self.Non**-0.5)**0.5 / (deltafreq)**0.5 #Calculate RMS temp. (noise) for TP OTF maps
-		noise_array = noise_array * exptime_array**0.5
-		print('S/N per beam: ', signal_array/noise_array)
-		variance_array = noise_array**2
+			noise = Tsys * (1.0 + self.Non**-0.5)**0.5 / (deltafreq)**0.5 #Calculate RMS temp. (noise) for TP OTF maps
+
+		#noise_array = noise_array * exptime_array
+		# noise_array = noise #/ (exptime_array**0.5)
+		# print('Noise per beam', noise_array)
+
+		# print('S/N per beam', signal_array/noise_array)
+		# print()
+		total_beam_signal = bn.nansum(signal_array/exptime_array)
+		total_beam_noise = bn.nansum((noise*len(signal_array))**2/exptime_array)**0.5
+		print('Total beam signal:', total_beam_signal)
+		print('Total beam noise:', total_beam_noise)
+		print('Total beam S/N:', total_beam_signal/total_beam_noise)
+
+		#convolved_variance = np.zeros(np.shape(self.data))
+		# #Paint variance onto 2D variance array starting by making the variance point sources as narrow gaussians
+		# fwhm = self.fwhm / 10.0 #Set parameters for 2D gaussian
+		# stddev = fwhm / (2.0 * np.sqrt(np.log(2.0)))#Convert FWHM to stddev
+		# for i in range(len(self.x_beam)): #Loop through each beam and create a point source for the variance
+		# 	gauss_model =  models.Gaussian2D(amplitude=1.0, x_mean=self.x_beam[i], y_mean=self.y_beam[i], x_stddev=stddev, y_stddev=stddev)
+
+		# 	point_source_gaussian = gauss_model(self.x, self.y)
+		# 	point_source_gaussian = noise_array[i]**2 * point_source_gaussian / bn.nansum(point_source_gaussian) #Normalize gaussian
+
+
+		# # 	variance +=  point_source_gaussian
+		# n_beams = len(self.beam_profiles)
+		# variance_array = np.zeros(n_beams)
+		# for i in range(n_beams):
+		# 	chunk_of_array_profile = self.beam_profiles[i](self.x, self.y) #Isolate the beam profile on the sky to use 
+		# 	sum_chunk_of_array_profile = bn.nansum(chunk_of_array_profile)
+		# 	variance_array[i] = bn.nansum(variance * chunk_of_array_profile) / sum_chunk_of_array_profile #Convovle assumed signal on sky with beam profile
+
 
 		for ix, x in enumerate(self.x_1d): #Loop through each pixel in the sky object and use a kernel with 1/3 the FWHM of the beam size to 
 			for iy, y in enumerate(self.y_1d):
 				weights = gauss2d(xpos=x_array, ypos=y_array, x=x, y=y, stddev=one_third_stddev) #Generate weights for this position using the kernel
 				self.data[iy, ix] = bn.nansum(signal_array * weights) #Convolve simualted signal on sky with kernel to claculate signal at this pixel
-				self.exptime[iy, ix] = bn.nansum(exptime_array * weights) #Convolve exposure time with kernel to calulate the exposure time for this specific pixel
-				self.noise[iy, ix] = np.sqrt(bn.nansum(variance_array*weights))
-		self.data = self.data / self.exptime #normalize simulated data by exposure time
-		self.noise = self.noise / self.exptime**0.5
+				self.exptime[iy, ix] = bn.nansum(exptime_array * weights)#/self.plate_scale**2 #Convolve exposure time with kernel to calulate the exposure time for this specific pixel
+				#exptime_weighted_for_noise[iy, ix] = bn.nansum(exptime_array * weights**0.5)
+				#convolved_variance[iy, ix] = bn.nansum(variance_array * weights)
+
+				#convolved_variance[iy, ix] = bn.nansum(noise_array**2 * exptime_array * weights)
+
+		self.data = self.data / (self.exptime) #normalize simulated data by exposure time
+		#self.noise = (convolved_variance / self.exptime)**0.5
+		#self.noise = noise  / ((self.exptime * self.plate_scale**2)**0.5)
+		self.noise = noise  / ((self.exptime)**0.5)
+
 		print('Total S/N: ',self.s2n())
 	def input(self, model_shape): #Draw an astropy model shape onto  sigal (e.g. create a model of the "true" signal)
 		self.signal += model_shape(self.x, self.y)
@@ -374,12 +417,13 @@ class sky:
 		self.exptime = block_reduce(self.exptime, factor, func=np.nanmean)
 		self.signal = block_reduce(self.signal, factor, func=np.nanmean)
 		print('Total S/N: ',self.s2n())
-	def s2n(self): #Return total signal-to-noise value as a sanity check
-		goodpix = np.isfinite(self.noise) & np.isfinite(self.data) & (self.noise > 0.)
+	def s2n(self, s2n_cut=1e-5): #Return total signal-to-noise value as a sanity check
+		goodpix = np.isfinite(self.noise) & np.isfinite(self.data)# & (self.data/self.noise > s2n_cut)
 		total_signal = bn.nansum(self.data[goodpix])
 		total_noise = bn.nansum(self.noise[goodpix]**2)**0.5
-		print(total_signal, total_noise)
-		return total_signal / total_noise
+		print('total signal =',total_signal)
+		print('total noise = ', total_noise)
+		return (total_signal / total_noise /np.size(self.data)**0.5) #/ self.area
 
 
 
@@ -450,6 +494,7 @@ class GREAT_array:
 			skyobj.y_beam.append(this_array_profile.y_mean.value)
 			skyobj.exptime_beam.append(time * cycles)
 			skyobj.signal_beam.append(convolved_signal * time * cycles)
+			skyobj.beam_profiles.append(this_array_profile)
 	##### backup of old paint method
 	# def paint(self, skyobj, time=1.0, cycles=1, TPOTF=False): #Paint a single instance of the array profile onto a sky object, this is the base for all observation types including single pointing and maps
 	# 	#skyobj.total_exptime += time*cycles #Add exposure time from this to the total
@@ -499,14 +544,19 @@ class GREAT_array:
 			for iy in range(ny):
 				self.position(rotated_map_x[iy,ix], rotated_map_y[iy,ix]) #Set array position at this step
 				self.paint(skyobj, time=time, cycles=cycles) #Paint the current step to the sky object
-	def honeycomb(self, skyobj, x=0., y=0., time=1.0, cycles=1, array_angle=0., map_angle=0.):
+	def honeycomb(self, skyobj, x=0., y=0., time=1.0, cycles=1, array_angle=0., map_angle=0., LFA=False, HFA=False):
 		if self.freq > 0.: #Pass through the frequency to the sky object if it is specified for this array
 			skyobj.freq = self.freq
 		self.rotate(array_angle) #Set rotation angle
-		if self.type == 'LFAV' or self.type == 'LFAH': #Set multiplier for honeycomb offsets based on which array you are using
+		if LFA: #Set multiplier for honeycomb offsets based on if the user specifically selects LFA or HFA or based which array you are using (default)
 			honeycomb_multiplier = 6.34
-		elif self.type == 'HFA':
+		elif HFA:
 			honeycomb_multiplier = 2.76
+		else:
+			if self.type == 'LFAV' or self.type == 'LFAH': 
+				honeycomb_multiplier = 6.34
+			if self.type == 'HFA':
+				honeycomb_multiplier = 2.76
 		c, s = np.cos(np.radians(map_angle)), np.sin(np.radians(map_angle)) #Construct rotation matrix
 		rot_matrix = np.array([[c, s], [-s, c]]).T
 		honeycomb_map_positions = np.array([x,y]).T + (honeycomb_pattern*honeycomb_multiplier).dot(rot_matrix) #Construct a vector of honeycomb positions and dot it with the rotation matrix
