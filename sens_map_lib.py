@@ -300,7 +300,7 @@ class sky:
 			pyplot.imshow(self.noise, origin='bottom', extent=self.extent, vmax=2.0*min_noise, vmin=0.8*min_noise, **kwargs)
 			#pyplot.imshow(self.noise, origin='bottom', extent=self.extent, **kwargs)
 			label = r'$\Delta T_a$'
-			title = r'Noise ($\Delta T_a$)'
+			title = r'Noise ($\Delta T_a^*$)'
 		elif map_type == 's2n': #If s2n is true, plot the signal-to-noise
 			s2n = self.data/self.noise
 			min_s2n = np.nanpercentile(s2n, 5)
