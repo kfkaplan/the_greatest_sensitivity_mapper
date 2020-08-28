@@ -290,7 +290,7 @@ class sky:
 		if map_type == 'exposure':
 			pyplot.imshow(self.exptime, origin='bottom', extent=self.extent, **kwargs)
 			label = r'Time (s)'
-			title = r'Exposure Time Per Square Arcsec (s arcsec$^{-1}$)'
+			title = r'Exposure Time (s)'
 		elif map_type == 'signal': # if signal is set to true, plot the modeled signal instead
 			pyplot.imshow(self.signal, origin='bottom', extent=self.extent, **kwargs)
 			label = r'$T_a$'
