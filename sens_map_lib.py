@@ -288,29 +288,30 @@ class sky:
 		# if np.any(self.signal != 0.): #Error catch to ensure we are not dividing by zero
 		# 	self.normalize()
 		if map_type == 'exposure':
-			pyplot.imshow(self.exptime, origin='bottom', extent=self.extent, **kwargs)
+			pyplot.imshow(self.exptime, origin='lower', extent=self.extent, **kwargs)
 			label = r'Time (s)'
 			title = r'Exposure Time (s)'
 		elif map_type == 'signal': # if signal is set to true, plot the modeled signal instead
-			pyplot.imshow(self.signal, origin='bottom', extent=self.extent, **kwargs)
+			pyplot.imshow(self.signal, origin='lower', extent=self.extent, **kwargs)
 			label = r'$T_a$'
 			title = r'Signal ($T_a$)'
 		elif map_type == 'noise':
 			min_noise = np.nanmin(self.noise)
-			pyplot.imshow(self.noise, origin='bottom', extent=self.extent, vmax=2.0*min_noise, vmin=0.8*min_noise, **kwargs)
-			#pyplot.imshow(self.noise, origin='bottom', extent=self.extent, **kwargs)
+			pyplot.imshow(self.noise, origin='lower', extent=self.extent, vmax=2.0*min_noise, vmin=0.8*min_noise, **kwargs)
+			#pyplot.imshow(self.noise, origin='lower', extent=self.extent, **kwargs)
 			label = r'$\Delta T_a$'
 			title = r'Noise ($\Delta T_a^*$)'
 		elif map_type == 's2n': #If s2n is true, plot the signal-to-noise
 			s2n = self.data/self.noise
-			min_s2n = np.nanpercentile(s2n, 5)
-			max_s2n = np.nanpercentile(s2n, 95)
-			pyplot.imshow(s2n, origin='bottom', extent=self.extent, vmax=max_s2n, vmin=min_s2n, **kwargs)
+			#min_s2n = np.nanpercentile(s2n, 5)
+			#max_s2n = np.nanpercentile(s2n, 95)
+			#pyplot.imshow(s2n, origin='lower', extent=self.extent, vmax=max_s2n, vmin=min_s2n, **kwargs)
+			pyplot.imshow(s2n, origin='lower', extent=self.extent, **kwargs)
 			label = r'S/N'
 			title = r'S/N'
 		else: #Normally plot the simulated data
 			min_Ta = 0.9 * bn.nanmin(self.data[np.isfinite(self.data)]) #Fix colorbar scale, especially for a uniform background
-			pyplot.imshow(self.data, origin='bottom', extent=self.extent, vmin=min_Ta, **kwargs)
+			pyplot.imshow(self.data, origin='lower', extent=self.extent, vmin=min_Ta, **kwargs)
 			label = r'$T_a$'
 			title = r'$T_a$'
 		if show_points: #If user specifies to show points (usually map or block centers), plot them
