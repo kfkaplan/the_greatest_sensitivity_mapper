@@ -344,6 +344,8 @@ class sky:
 			self.Non = Non
 		if deltav > 0: #If user specifies the size of the spectral element in km/s, use that to calculate deltafreq instead of deltafreq being provided
 				deltafreq = (deltav / 299792.458) * self.freq
+				# print('self.freq = ', self.freq)
+				# print('deltafreq = ', deltafreq)
 		if not self.TPOTF: #If not a Total Power OTF map (most observations)...
 			noise = (2.0 * Tsys) / ((deltafreq)**0.5) #Calulate RMS temperature (noise) using Equation 6-5 in the observer's handbook
 		else: #If a Total Power Array OTF map....
@@ -461,7 +463,7 @@ class GREAT_array:
 		self.set_array_rotation(angle) #Set new rotation angle
 	def set_array_rotation(self, angle): #Rotate the positions of all the pixels around the 0th pixel (angle is inputted in degrees)
 		zeroth_pixel = self.array_profile[0] #Grab central pixel
-		zero_point = np.array([zeroth_pixel.x_mean, zeroth_pixel.y_mean]).T #Store zero point of central pixel as a 
+		zero_point = np.array([zeroth_pixel.x_mean.value, zeroth_pixel.y_mean.value]).T #Store zero point of central pixel as a 
 		c, s = np.cos(np.radians(angle)), np.sin(np.radians(angle)) #Construct rotation matrix
 		rot_matrix = np.array([[c, s], [-s, c]]).T
 		for pixel in self.array_profile:
