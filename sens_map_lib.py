@@ -121,10 +121,10 @@ class aor:
 		self.array_angle = float(instr_data['ArrayRotationAngle'])
 		frequencies = [] #Grab  frequencies 1,2,3,4,5
 		frequencies.append(float(instr_data['Frequency']) * 1e9) #HFA
-		frequencies.append(float(instr_data['Frequency2']) * 1e9) #4G1
-		frequencies.append(float(instr_data['Frequency3']) * 1e9) #4G2
-		frequencies.append(float(instr_data['Frequency4']) * 1e9) #4G3 or LFAH
-		frequencies.append(float(instr_data['Frequency5']) * 1e9) #4G4 or LFAV
+		frequencies.append(float(instr_data['Frequency2']) * 1e9) #4G4
+		frequencies.append(float(instr_data['Frequency3']) * 1e9) #4G3
+		frequencies.append(float(instr_data['Frequency4']) * 1e9) #4G2 or LFAH
+		frequencies.append(float(instr_data['Frequency5']) * 1e9) #4G1 or LFAV
 		self.frequencies = frequencies #
 		self.aor_id = instr_data['aorID'] #Carry the aor ID through so it is easier to identify what is what
 		if self.map_type == 'GREAT_SP': #Grab mapping parameters
@@ -174,25 +174,25 @@ class aor:
 		# #Determine which array to use and generate the appropriate object
 		if which_array.upper() == 'HFA':
 			array_obj = HFA_array()
-			array_obj.freq = self.frequencies[0]
+			skyobj.freq = self.frequencies[0]
 		elif which_array.upper() == 'LFAH':
 			array_obj = LFAH_array()
-			array_obj.freq = self.frequencies[3]
+			skyobj.freq = self.frequencies[3]
 		elif which_array.upper() == 'LFAV':
 			array_obj = LFAV_array()
-			array_obj.freq = self.frequencies[4]
+			skyobj.freq = self.frequencies[4]
 		elif which_array.upper() == '4G1':
 			array_obj = FG1_array()
-			array_obj.freq = self.frequencies[1]
+			skyobj.freq = self.frequencies[4]
 		elif which_array.upper() == '4G2':
 			array_obj = FG2_array()
-			array_obj.freq = self.frequencies[2]
+			skyobj.freq = self.frequencies[3]
 		elif which_array.upper() == '4G3':
 			array_obj = FG3_array()
-			array_obj.freq = self.frequencies[3]
+			skyobj.freq = self.frequencies[2]
 		elif which_array.upper() == '4G4':
 			array_obj = FG4_array()
-			array_obj.freq = self.frequencies[4]
+			skyobj.freq = self.frequencies[1]
 		else:
 			print('ERROR: '+which_array+' is not a valid array. Please set to be either HFA, LFAH, LFAV, 4G1, 4G2, 4G3, or 4G4')
 			return
@@ -492,6 +492,7 @@ class GREAT_array:
 		for this_array_profile in self.array_profile: #Loop through each individual beam in array
 			chunk_of_array_profile = this_array_profile(skyobj.x[iy1:iy2, ix1:ix2], skyobj.y[iy1:iy2, ix1:ix2]) #Isolate the beam profile on the sky to use 
 			sum_chunk_of_array_profile = bn.nansum(chunk_of_array_profile)
+			#if np.size(chunk_of_array_profile) > 0: #Error catch, only record beams that are inside the sky map
 			convolved_signal = bn.nansum(chunk_of_signal * chunk_of_array_profile) / sum_chunk_of_array_profile #Convovle assumed signal on sky with beam profile
 			skyobj.x_beam.append(this_array_profile.x_mean.value) #Save position, convolved signal, and exposure time for each beam in a list of the sky object for later regridding
 			skyobj.y_beam.append(this_array_profile.y_mean.value)
