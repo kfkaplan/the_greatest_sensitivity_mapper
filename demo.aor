@@ -1,0 +1,571 @@
+<AORs>
+  <list>
+    <AorMetaData>
+      <AorType>AORs</AorType>
+      <Version>8.0</Version>
+    </AorMetaData>
+    <ProposalInfo Status="Pending" TACQueue="US" SoftwareVersion="4.3.1_1  Final" CycleID="" Priority="" ObsPlanState="">
+      <ProposalID></ProposalID>
+      <ProposalTitle></ProposalTitle>
+      <AwardedTime>0.0</AwardedTime>
+      <Category>OPEN</Category>
+      <TACPanel>ISM</TACPanel>
+      <ScienceKeywords></ScienceKeywords>
+      <ProposalAbstract></ProposalAbstract>
+      <IsQueue>true</IsQueue>
+      <IsTOO>false</IsTOO>
+      <IsLongTerm>false</IsLongTerm>
+      <IsService>false</IsService>
+      <IsSurvey>false</IsSurvey>
+      <IsEpoRequested>false</IsEpoRequested>
+      <IsImpact>false</IsImpact>
+      <IsThesis>false</IsThesis>
+      <IsWaiveExclusiveUse>false</IsWaiveExclusiveUse>
+      <IsArchival>false</IsArchival>
+      <MultiObservatoryProposal>NONE</MultiObservatoryProposal>
+      <SpecialInstructions></SpecialInstructions>
+      <TotalObsDuration>36559.71875</TotalObsDuration>
+      <SubmissionKey></SubmissionKey>
+      <pdf></pdf>
+      <teampdf></teampdf>
+      <ObservationStatus></ObservationStatus>
+      <RelatedProposals></RelatedProposals>
+      <ResubmitProposal></ResubmitProposal>
+      <Investigator FirstName="" LastName="" Honorific="Dr." JobTitle="" Institution="" State="NONE" Street1="" City="" Postcode="" Phone="" Country="">
+        <DCSUserName></DCSUserName>
+        <ContactEmail></ContactEmail>
+        <Primary></Primary>
+      </Investigator>
+    </ProposalInfo>
+    <list>
+      <SofiaTargetFixedSingle>
+        <name>Nameless Galaxy</name>
+        <targetAttributes/>
+        <locationAttributes/>
+        <position>
+          <lon>0.0</lon>
+          <lat>0.0</lat>
+          <pm>
+            <lonPm>0.0</lonPm>
+            <latPm>0.0</latPm>
+          </pm>
+          <coordSystem>
+            <jsys>0</jsys>
+            <equinoxYear>2000.0</equinoxYear>
+            <equinoxDesc>J2000</equinoxDesc>
+            <coodSysName>Equatorial</coodSysName>
+            <jsysDesc>Equatorial J</jsysDesc>
+            <equatorial>true</equatorial>
+            <ecliptic>false</ecliptic>
+            <galactic>false</galactic>
+          </coordSystem>
+          <epoch>2000.0</epoch>
+          <userEnteredPos>
+            <lon>0.0</lon>
+            <lat>0.0</lat>
+            <pm>
+              <lonPm>0.0</lonPm>
+              <latPm>0.0</latPm>
+            </pm>
+            <coordSystem>
+              <jsys>0</jsys>
+              <equinoxYear>2000.0</equinoxYear>
+              <equinoxDesc>J2000</equinoxDesc>
+              <coodSysName>Equatorial</coodSysName>
+              <jsysDesc>Equatorial J</jsysDesc>
+              <equatorial>true</equatorial>
+              <ecliptic>false</ecliptic>
+              <galactic>false</galactic>
+            </coordSystem>
+            <epoch>2000.0</epoch>
+            <lonStr>0h00m00.0000s</lonStr>
+            <latStr>+0d00m00.000s</latStr>
+          </userEnteredPos>
+        </position>
+        <guideStarList class="vector">
+          <Guidestar Imager="FFI" Catalog="HIPPARCOS" Radius="1028.34">
+            <GuideStarName>HIP118307</GuideStarName>
+            <GuideStarRA>359.9437151468</GuideStarRA>
+            <GuideStarDec>-0.280114359</GuideStarDec>
+            <GuideStarMagnitude Type="V">6.83</GuideStarMagnitude>
+            <GuideStarMagnitude2 Type="">999.0</GuideStarMagnitude2>
+            <GuideStarProperMotionRA>-0.00514</GuideStarProperMotionRA>
+            <GuideStarProperMotionDec>-0.02543</GuideStarProperMotionDec>
+            <GuideStarBminusV>1.614</GuideStarBminusV>
+          </Guidestar>
+          <Guidestar Imager="FFI" Catalog="HIPPARCOS" Radius="1309.102">
+            <GuideStarName>HIP14</GuideStarName>
+            <GuideStarRA>0.0484219798</GuideStarRA>
+            <GuideStarDec>-0.3604495546</GuideStarDec>
+            <GuideStarMagnitude Type="V">7.25</GuideStarMagnitude>
+            <GuideStarMagnitude2 Type="">999.0</GuideStarMagnitude2>
+            <GuideStarProperMotionRA>0.06175</GuideStarProperMotionRA>
+            <GuideStarProperMotionDec>-0.01167</GuideStarProperMotionDec>
+            <GuideStarBminusV>1.2</GuideStarBminusV>
+          </Guidestar>
+          <Guidestar Imager="FFI" Catalog="HIPPARCOS" Radius="993.86">
+            <GuideStarName>HIP56</GuideStarName>
+            <GuideStarRA>0.162926591</GuideStarRA>
+            <GuideStarDec>0.2229314796</GuideStarDec>
+            <GuideStarMagnitude Type="V">8.12</GuideStarMagnitude>
+            <GuideStarMagnitude2 Type="">999.0</GuideStarMagnitude2>
+            <GuideStarProperMotionRA>0.039020000000000006</GuideStarProperMotionRA>
+            <GuideStarProperMotionDec>-0.00309</GuideStarProperMotionDec>
+            <GuideStarBminusV>1.329</GuideStarBminusV>
+          </Guidestar>
+          <Guidestar Imager="FFI" Catalog="HIPPARCOS" Radius="1086.925">
+            <GuideStarName>HIP93</GuideStarName>
+            <GuideStarRA>0.2923560848</GuideStarRA>
+            <GuideStarDec>-0.0760984511</GuideStarDec>
+            <GuideStarMagnitude Type="V">8.12</GuideStarMagnitude>
+            <GuideStarMagnitude2 Type="">999.0</GuideStarMagnitude2>
+            <GuideStarProperMotionRA>0.054939999999999996</GuideStarProperMotionRA>
+            <GuideStarProperMotionDec>-0.07328</GuideStarProperMotionDec>
+            <GuideStarBminusV>0.619</GuideStarBminusV>
+          </Guidestar>
+          <Guidestar Imager="FFI" Catalog="HIPPARCOS" Radius="1724.311">
+            <GuideStarName>HIP135</GuideStarName>
+            <GuideStarRA>0.4267963058</GuideStarRA>
+            <GuideStarDec>-0.2177767478</GuideStarDec>
+            <GuideStarMagnitude Type="V">8.64</GuideStarMagnitude>
+            <GuideStarMagnitude2 Type="">999.0</GuideStarMagnitude2>
+            <GuideStarProperMotionRA>0.020730000000000002</GuideStarProperMotionRA>
+            <GuideStarProperMotionDec>-0.11408</GuideStarProperMotionDec>
+            <GuideStarBminusV>0.62</GuideStarBminusV>
+          </Guidestar>
+          <Guidestar Imager="WFI" Catalog="HIPPARCOS" Radius="12856.385">
+            <GuideStarName>HIP118209</GuideStarName>
+            <GuideStarRA>359.66823972</GuideStarRA>
+            <GuideStarDec>-3.5559832064</GuideStarDec>
+            <GuideStarMagnitude Type="V">4.88</GuideStarMagnitude>
+            <GuideStarMagnitude2 Type="">999.0</GuideStarMagnitude2>
+            <GuideStarProperMotionRA>-0.05652</GuideStarProperMotionRA>
+            <GuideStarProperMotionDec>-0.07234</GuideStarProperMotionDec>
+            <GuideStarBminusV>0.93</GuideStarBminusV>
+          </Guidestar>
+          <Guidestar Imager="WFI" Catalog="HIPPARCOS" Radius="11021.74">
+            <GuideStarName>HIP145</GuideStarName>
+            <GuideStarRA>0.4560351217</GuideStarRA>
+            <GuideStarDec>-3.0275038232</GuideStarDec>
+            <GuideStarMagnitude Type="V">5.13</GuideStarMagnitude>
+            <GuideStarMagnitude2 Type="">999.0</GuideStarMagnitude2>
+            <GuideStarProperMotionRA>0.0189</GuideStarProperMotionRA>
+            <GuideStarProperMotionDec>-0.01025</GuideStarProperMotionDec>
+            <GuideStarBminusV>-0.128</GuideStarBminusV>
+          </Guidestar>
+          <Guidestar Imager="WFI" Catalog="HIPPARCOS" Radius="14714.933">
+            <GuideStarName>HIP117375</GuideStarName>
+            <GuideStarRA>356.9855957997</GuideStarRA>
+            <GuideStarDec>-2.7615976619</GuideStarDec>
+            <GuideStarMagnitude Type="V">5.49</GuideStarMagnitude>
+            <GuideStarMagnitude2 Type="">999.0</GuideStarMagnitude2>
+            <GuideStarProperMotionRA>0.09645000000000001</GuideStarProperMotionRA>
+            <GuideStarProperMotionDec>0.0055</GuideStarProperMotionDec>
+            <GuideStarBminusV>0.941</GuideStarBminusV>
+          </Guidestar>
+          <Guidestar Imager="WFI" Catalog="HIPPARCOS" Radius="12788.912">
+            <GuideStarName>HIP117683</GuideStarName>
+            <GuideStarRA>357.9909951016</GuideStarRA>
+            <GuideStarDec>2.9303843814</GuideStarDec>
+            <GuideStarMagnitude Type="V">5.59</GuideStarMagnitude>
+            <GuideStarMagnitude2 Type="">999.0</GuideStarMagnitude2>
+            <GuideStarProperMotionRA>0.01469</GuideStarProperMotionRA>
+            <GuideStarProperMotionDec>-0.01442</GuideStarProperMotionDec>
+            <GuideStarBminusV>1.527</GuideStarBminusV>
+          </Guidestar>
+          <Guidestar Imager="WFI" Catalog="HIPPARCOS" Radius="10247.888">
+            <GuideStarName>HIP117491</GuideStarName>
+            <GuideStarRA>357.3644814323</GuideStarRA>
+            <GuideStarDec>1.0761314978</GuideStarDec>
+            <GuideStarMagnitude Type="V">5.77</GuideStarMagnitude>
+            <GuideStarMagnitude2 Type="">999.0</GuideStarMagnitude2>
+            <GuideStarProperMotionRA>-2.5E-4</GuideStarProperMotionRA>
+            <GuideStarProperMotionDec>-0.02632</GuideStarProperMotionDec>
+            <GuideStarBminusV>0.167</GuideStarBminusV>
+          </Guidestar>
+          <Guidestar Imager="WFI" Catalog="HIPPARCOS" Radius="4716.743">
+            <GuideStarName>HIP117887</GuideStarName>
+            <GuideStarRA>358.6942640172</GuideStarRA>
+            <GuideStarDec>0.109308731</GuideStarDec>
+            <GuideStarMagnitude Type="V">5.78</GuideStarMagnitude>
+            <GuideStarMagnitude2 Type="">999.0</GuideStarMagnitude2>
+            <GuideStarProperMotionRA>-0.04093</GuideStarProperMotionRA>
+            <GuideStarProperMotionDec>-0.01463</GuideStarProperMotionDec>
+            <GuideStarBminusV>1.466</GuideStarBminusV>
+          </Guidestar>
+        </guideStarList>
+      </SofiaTargetFixedSingle>
+    </list>
+    <vector>
+      <Request>
+        <title>GREAT_ON_THE_FLY_ARRAY_MAPPING-0000</title>
+        <target class="SofiaTargetFixedSingle">
+          <name>Nameless Galaxy</name>
+          <targetAttributes/>
+          <locationAttributes/>
+          <position>
+            <lon>0.0</lon>
+            <lat>0.0</lat>
+            <pm>
+              <lonPm>0.0</lonPm>
+              <latPm>0.0</latPm>
+            </pm>
+            <coordSystem>
+              <jsys>0</jsys>
+              <equinoxYear>2000.0</equinoxYear>
+              <equinoxDesc>J2000</equinoxDesc>
+              <coodSysName>Equatorial</coodSysName>
+              <jsysDesc>Equatorial J</jsysDesc>
+              <equatorial>true</equatorial>
+              <ecliptic>false</ecliptic>
+              <galactic>false</galactic>
+            </coordSystem>
+            <epoch>2000.0</epoch>
+            <userEnteredPos>
+              <lon>0.0</lon>
+              <lat>0.0</lat>
+              <pm>
+                <lonPm>0.0</lonPm>
+                <latPm>0.0</latPm>
+              </pm>
+              <coordSystem>
+                <jsys>0</jsys>
+                <equinoxYear>2000.0</equinoxYear>
+                <equinoxDesc>J2000</equinoxDesc>
+                <coodSysName>Equatorial</coodSysName>
+                <jsysDesc>Equatorial J</jsysDesc>
+                <equatorial>true</equatorial>
+                <ecliptic>false</ecliptic>
+                <galactic>false</galactic>
+              </coordSystem>
+              <epoch>2000.0</epoch>
+              <lonStr>0h00m00.0000s</lonStr>
+              <latStr>+0d00m00.000s</latStr>
+            </userEnteredPos>
+          </position>
+          <guideStarList class="vector">
+            <Guidestar Imager="FFI" Catalog="HIPPARCOS" Radius="1028.34">
+              <GuideStarName>HIP118307</GuideStarName>
+              <GuideStarRA>359.9437151468</GuideStarRA>
+              <GuideStarDec>-0.280114359</GuideStarDec>
+              <GuideStarMagnitude Type="V">6.83</GuideStarMagnitude>
+              <GuideStarMagnitude2 Type="">999.0</GuideStarMagnitude2>
+              <GuideStarProperMotionRA>-0.00514</GuideStarProperMotionRA>
+              <GuideStarProperMotionDec>-0.02543</GuideStarProperMotionDec>
+              <GuideStarBminusV>1.614</GuideStarBminusV>
+            </Guidestar>
+            <Guidestar Imager="FFI" Catalog="HIPPARCOS" Radius="1309.102">
+              <GuideStarName>HIP14</GuideStarName>
+              <GuideStarRA>0.0484219798</GuideStarRA>
+              <GuideStarDec>-0.3604495546</GuideStarDec>
+              <GuideStarMagnitude Type="V">7.25</GuideStarMagnitude>
+              <GuideStarMagnitude2 Type="">999.0</GuideStarMagnitude2>
+              <GuideStarProperMotionRA>0.06175</GuideStarProperMotionRA>
+              <GuideStarProperMotionDec>-0.01167</GuideStarProperMotionDec>
+              <GuideStarBminusV>1.2</GuideStarBminusV>
+            </Guidestar>
+            <Guidestar Imager="FFI" Catalog="HIPPARCOS" Radius="993.86">
+              <GuideStarName>HIP56</GuideStarName>
+              <GuideStarRA>0.162926591</GuideStarRA>
+              <GuideStarDec>0.2229314796</GuideStarDec>
+              <GuideStarMagnitude Type="V">8.12</GuideStarMagnitude>
+              <GuideStarMagnitude2 Type="">999.0</GuideStarMagnitude2>
+              <GuideStarProperMotionRA>0.039020000000000006</GuideStarProperMotionRA>
+              <GuideStarProperMotionDec>-0.00309</GuideStarProperMotionDec>
+              <GuideStarBminusV>1.329</GuideStarBminusV>
+            </Guidestar>
+            <Guidestar Imager="FFI" Catalog="HIPPARCOS" Radius="1086.925">
+              <GuideStarName>HIP93</GuideStarName>
+              <GuideStarRA>0.2923560848</GuideStarRA>
+              <GuideStarDec>-0.0760984511</GuideStarDec>
+              <GuideStarMagnitude Type="V">8.12</GuideStarMagnitude>
+              <GuideStarMagnitude2 Type="">999.0</GuideStarMagnitude2>
+              <GuideStarProperMotionRA>0.054939999999999996</GuideStarProperMotionRA>
+              <GuideStarProperMotionDec>-0.07328</GuideStarProperMotionDec>
+              <GuideStarBminusV>0.619</GuideStarBminusV>
+            </Guidestar>
+            <Guidestar Imager="FFI" Catalog="HIPPARCOS" Radius="1724.311">
+              <GuideStarName>HIP135</GuideStarName>
+              <GuideStarRA>0.4267963058</GuideStarRA>
+              <GuideStarDec>-0.2177767478</GuideStarDec>
+              <GuideStarMagnitude Type="V">8.64</GuideStarMagnitude>
+              <GuideStarMagnitude2 Type="">999.0</GuideStarMagnitude2>
+              <GuideStarProperMotionRA>0.020730000000000002</GuideStarProperMotionRA>
+              <GuideStarProperMotionDec>-0.11408</GuideStarProperMotionDec>
+              <GuideStarBminusV>0.62</GuideStarBminusV>
+            </Guidestar>
+            <Guidestar Imager="WFI" Catalog="HIPPARCOS" Radius="12856.385">
+              <GuideStarName>HIP118209</GuideStarName>
+              <GuideStarRA>359.66823972</GuideStarRA>
+              <GuideStarDec>-3.5559832064</GuideStarDec>
+              <GuideStarMagnitude Type="V">4.88</GuideStarMagnitude>
+              <GuideStarMagnitude2 Type="">999.0</GuideStarMagnitude2>
+              <GuideStarProperMotionRA>-0.05652</GuideStarProperMotionRA>
+              <GuideStarProperMotionDec>-0.07234</GuideStarProperMotionDec>
+              <GuideStarBminusV>0.93</GuideStarBminusV>
+            </Guidestar>
+            <Guidestar Imager="WFI" Catalog="HIPPARCOS" Radius="11021.74">
+              <GuideStarName>HIP145</GuideStarName>
+              <GuideStarRA>0.4560351217</GuideStarRA>
+              <GuideStarDec>-3.0275038232</GuideStarDec>
+              <GuideStarMagnitude Type="V">5.13</GuideStarMagnitude>
+              <GuideStarMagnitude2 Type="">999.0</GuideStarMagnitude2>
+              <GuideStarProperMotionRA>0.0189</GuideStarProperMotionRA>
+              <GuideStarProperMotionDec>-0.01025</GuideStarProperMotionDec>
+              <GuideStarBminusV>-0.128</GuideStarBminusV>
+            </Guidestar>
+            <Guidestar Imager="WFI" Catalog="HIPPARCOS" Radius="14714.933">
+              <GuideStarName>HIP117375</GuideStarName>
+              <GuideStarRA>356.9855957997</GuideStarRA>
+              <GuideStarDec>-2.7615976619</GuideStarDec>
+              <GuideStarMagnitude Type="V">5.49</GuideStarMagnitude>
+              <GuideStarMagnitude2 Type="">999.0</GuideStarMagnitude2>
+              <GuideStarProperMotionRA>0.09645000000000001</GuideStarProperMotionRA>
+              <GuideStarProperMotionDec>0.0055</GuideStarProperMotionDec>
+              <GuideStarBminusV>0.941</GuideStarBminusV>
+            </Guidestar>
+            <Guidestar Imager="WFI" Catalog="HIPPARCOS" Radius="12788.912">
+              <GuideStarName>HIP117683</GuideStarName>
+              <GuideStarRA>357.9909951016</GuideStarRA>
+              <GuideStarDec>2.9303843814</GuideStarDec>
+              <GuideStarMagnitude Type="V">5.59</GuideStarMagnitude>
+              <GuideStarMagnitude2 Type="">999.0</GuideStarMagnitude2>
+              <GuideStarProperMotionRA>0.01469</GuideStarProperMotionRA>
+              <GuideStarProperMotionDec>-0.01442</GuideStarProperMotionDec>
+              <GuideStarBminusV>1.527</GuideStarBminusV>
+            </Guidestar>
+            <Guidestar Imager="WFI" Catalog="HIPPARCOS" Radius="10247.888">
+              <GuideStarName>HIP117491</GuideStarName>
+              <GuideStarRA>357.3644814323</GuideStarRA>
+              <GuideStarDec>1.0761314978</GuideStarDec>
+              <GuideStarMagnitude Type="V">5.77</GuideStarMagnitude>
+              <GuideStarMagnitude2 Type="">999.0</GuideStarMagnitude2>
+              <GuideStarProperMotionRA>-2.5E-4</GuideStarProperMotionRA>
+              <GuideStarProperMotionDec>-0.02632</GuideStarProperMotionDec>
+              <GuideStarBminusV>0.167</GuideStarBminusV>
+            </Guidestar>
+            <Guidestar Imager="WFI" Catalog="HIPPARCOS" Radius="4716.743">
+              <GuideStarName>HIP117887</GuideStarName>
+              <GuideStarRA>358.6942640172</GuideStarRA>
+              <GuideStarDec>0.109308731</GuideStarDec>
+              <GuideStarMagnitude Type="V">5.78</GuideStarMagnitude>
+              <GuideStarMagnitude2 Type="">999.0</GuideStarMagnitude2>
+              <GuideStarProperMotionRA>-0.04093</GuideStarProperMotionRA>
+              <GuideStarProperMotionDec>-0.01463</GuideStarProperMotionDec>
+              <GuideStarBminusV>1.466</GuideStarBminusV>
+            </Guidestar>
+          </guideStarList>
+        </target>
+        <est class="SofiaEstimates">
+          <duration>36559.72</duration>
+        </est>
+        <instrument class="sspot.sofia.data.great.GREAT_ON_THE_FLY_ARRAY_MAPPING">
+          <data>
+            <ArrayRotationAngle>0.0</ArrayRotationAngle>
+            <ScanOrderY>+1</ScanOrderY>
+            <IRFlux>1.0</IRFlux>
+            <After1UTDate TimingType="Preferred"></After1UTDate>
+            <YMapTimePerPoint>1.0</YMapTimePerPoint>
+            <SourceType>Point_Source</SourceType>
+            <OffsPerLoad>5</OffsPerLoad>
+            <RequestedWVOverburden>Nominal</RequestedWVOverburden>
+            <Repeat>10</Repeat>
+            <YMapNumBlocksY>1</YMapNumBlocksY>
+            <IsCalibrator>No</IsCalibrator>
+            <ScanOrderX>-1</ScanOrderX>
+            <ReferenceType>Offset</ReferenceType>
+            <RAOffset>600.0</RAOffset>
+            <aorID>_1</aorID>
+            <NumFillOTF>2</NumFillOTF>
+            <ScanDirection>x_direction</ScanDirection>
+            <YMapNumBlocksX>5</YMapNumBlocksX>
+            <Frequency5>2514.316705</Frequency5>
+            <Frequency4>1267.01449</Frequency4>
+            <Frequency3>1900.5369</Frequency3>
+            <OffPosTrack>FFI</OffPosTrack>
+            <TotalTime>1821.986</TotalTime>
+            <Frequency2>1900.5369</Frequency2>
+            <ArrayWidth>72.6</ArrayWidth>
+            <IDString></IDString>
+            <InstrumentSpectralElement1>GRE_HFA</InstrumentSpectralElement1>
+            <InstrumentSpectralElement2>GRE_LFA</InstrumentSpectralElement2>
+            <MapCenterOffsetRA>0.0</MapCenterOffsetRA>
+            <RefDec>0.166667</RefDec>
+            <LinesPerOff>10</LinesPerOff>
+            <ObsPlanConfig>DUAL-CHANNEL</ObsPlanConfig>
+            <DesiredResolution>0.0</DesiredResolution>
+            <ObservingPriority>Medium</ObservingPriority>
+            <IRFluxUnit>Jy</IRFluxUnit>
+            <MinimumContiguousTime>0.0</MinimumContiguousTime>
+            <LinesPerLoad>5</LinesPerLoad>
+            <ExpectedLinewidth>0.0</ExpectedLinewidth>
+            <PrimaryFrequency>LFAH</PrimaryFrequency>
+            <MapRotationAngle>315.0</MapRotationAngle>
+            <ScanDirectionVectorY>+1</ScanDirectionVectorY>
+            <XMapScanLength>1.0</XMapScanLength>
+            <DecOffset>600.0</DecOffset>
+            <ScanDirectionVectorX>+1</ScanDirectionVectorX>
+            <YMapScanLength>3.0</YMapScanLength>
+            <VisibleWavelength>V</VisibleWavelength>
+            <ChopAngleCoordinate>Sky</ChopAngleCoordinate>
+            <NodType>Total_Power</NodType>
+            <RefName></RefName>
+            <MapStepSize>5.2</MapStepSize>
+            <ChopThrow>0.0</ChopThrow>
+            <Before2UTDate></Before2UTDate>
+            <ObsPlanMode>OTFARRAYMAP_PSW</ObsPlanMode>
+            <XMapNumBlocksX>4</XMapNumBlocksX>
+            <XMapNumBlocksY>3</XMapNumBlocksY>
+            <VisibleMagnitude>1.0</VisibleMagnitude>
+            <ChopAngle>0.0</ChopAngle>
+            <RefRA>0.166667</RefRA>
+            <IRWavelength>10.0</IRWavelength>
+            <InstrumentName>GREAT</InstrumentName>
+            <XMapTimePerPoint>5.0</XMapTimePerPoint>
+            <IsTimeCritical>No</IsTimeCritical>
+            <Before1UTDate></Before1UTDate>
+            <IsExtraTime>No</IsExtraTime>
+            <MapArea>0.0</MapArea>
+            <After2UTDate></After2UTDate>
+            <IsSpecialObservation>No</IsSpecialObservation>
+            <Velocity>0.0</Velocity>
+            <MapCenterOffsetDec>0.0</MapCenterOffsetDec>
+            <Frequency>4744.77749</Frequency>
+          </data>
+          <mapPos>
+            <IndexedLocation label="preOTF_1">
+              <index>0</index>
+              <ra>0.0</ra>
+              <dec>-0.013749298523071767</dec>
+            </IndexedLocation>
+            <IndexedLocation label="postOTF_1">
+              <index>1</index>
+              <ra>0.0</ra>
+              <dec>5.10688230856944E-4</dec>
+            </IndexedLocation>
+            <IndexedLocation label="preOTF_2">
+              <index>2</index>
+              <ra>0.0</ra>
+              <dec>-0.02800928527700047</dec>
+            </IndexedLocation>
+            <IndexedLocation label="postOTF_2">
+              <index>3</index>
+              <ra>0.0</ra>
+              <dec>-0.01374929852307176</dec>
+            </IndexedLocation>
+            <IndexedLocation label="preOTF_3">
+              <index>4</index>
+              <ra>0.0</ra>
+              <dec>-0.04226927203092918</dec>
+            </IndexedLocation>
+            <IndexedLocation label="postOTF_3">
+              <index>5</index>
+              <ra>0.0</ra>
+              <dec>-0.028009285277000463</dec>
+            </IndexedLocation>
+            <IndexedLocation label="preOTF_4">
+              <index>6</index>
+              <ra>0.0</ra>
+              <dec>5.10688230856944E-4</dec>
+            </IndexedLocation>
+            <IndexedLocation label="postOTF_4">
+              <index>7</index>
+              <ra>0.0</ra>
+              <dec>0.014770674984785653</dec>
+            </IndexedLocation>
+            <IndexedLocation label="preOTF_5">
+              <index>8</index>
+              <ra>0.0</ra>
+              <dec>-0.01374929852307176</dec>
+            </IndexedLocation>
+            <IndexedLocation label="postOTF_5">
+              <index>9</index>
+              <ra>0.0</ra>
+              <dec>5.106882308569509E-4</dec>
+            </IndexedLocation>
+            <IndexedLocation label="preOTF_6">
+              <index>10</index>
+              <ra>0.0</ra>
+              <dec>-0.028009285277000463</dec>
+            </IndexedLocation>
+            <IndexedLocation label="postOTF_6">
+              <index>11</index>
+              <ra>0.0137492986220424</ra>
+              <dec>-0.013749298523071754</dec>
+            </IndexedLocation>
+            <IndexedLocation label="preOTF_7">
+              <index>12</index>
+              <ra>0.0</ra>
+              <dec>0.014770674984785653</dec>
+            </IndexedLocation>
+            <IndexedLocation label="postOTF_7">
+              <index>13</index>
+              <ra>0.0</ra>
+              <dec>0.029030661738714363</dec>
+            </IndexedLocation>
+            <IndexedLocation label="preOTF_8">
+              <index>14</index>
+              <ra>0.0</ra>
+              <dec>5.106882308569509E-4</dec>
+            </IndexedLocation>
+            <IndexedLocation label="postOTF_8">
+              <index>15</index>
+              <ra>0.013749298637292755</ra>
+              <dec>0.01477067498478566</dec>
+            </IndexedLocation>
+            <IndexedLocation label="preOTF_9">
+              <index>16</index>
+              <ra>0.0137492986220424</ra>
+              <dec>-0.013749298523071754</dec>
+            </IndexedLocation>
+            <IndexedLocation label="postOTF_9">
+              <index>17</index>
+              <ra>0.028009285277278615</ra>
+              <dec>5.106882308569559E-4</dec>
+            </IndexedLocation>
+            <IndexedLocation label="preOTF_10">
+              <index>18</index>
+              <ra>0.0</ra>
+              <dec>0.029030661738714363</dec>
+            </IndexedLocation>
+            <IndexedLocation label="postOTF_10">
+              <index>19</index>
+              <ra>0.013749299504217435</ra>
+              <dec>0.04329064849264307</dec>
+            </IndexedLocation>
+            <IndexedLocation label="preOTF_11">
+              <index>20</index>
+              <ra>0.013749298637292755</ra>
+              <dec>0.01477067498478566</dec>
+            </IndexedLocation>
+            <IndexedLocation label="postOTF_11">
+              <index>21</index>
+              <ra>0.028009286175836867</ra>
+              <dec>0.02903066173871437</dec>
+            </IndexedLocation>
+            <IndexedLocation label="preOTF_12">
+              <index>22</index>
+              <ra>0.028009285277278615</ra>
+              <dec>5.106882308569559E-4</dec>
+            </IndexedLocation>
+            <IndexedLocation label="postOTF_12">
+              <index>23</index>
+              <ra>0.04226927238207717</ra>
+              <dec>0.014770674984785665</dec>
+            </IndexedLocation>
+          </mapPos>
+        </instrument>
+        <observerComment>//USPOT generated warning
+#WARNING: the duration of your OTF scans is &gt; 30 seconds.
+You may want to reduce your map size or integration time per map point.
+//End USPOT generated warning</observerComment>
+        <status>new</status>
+        <aorID>_1</aorID>
+        <overhead>18339.86</overhead>
+      </Request>
+    </vector>
+    <ObsPlanObsBlockInfoList>
+      <PropID></PropID>
+    </ObsPlanObsBlockInfoList>
+  </list>
+</AORs>
