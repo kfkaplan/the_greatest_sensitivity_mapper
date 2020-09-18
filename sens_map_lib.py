@@ -172,33 +172,36 @@ class aor:
 			print('ERROR: '+self.map_type+' is not a valid map type to paint in the sky.')
 	def paint(self, skyobj, which_array, type=''): #Paint AOR onto sky object with specified array ("HFA", "LFA", or "4GREAT")
 		# #Determine which array to use and generate the appropriate object
+		print('frequencies = ', self.frequencies)
 		if which_array.upper() == 'HFA':
 			array_obj = HFA_array()
-			skyobj.freq = self.frequencies[0]
+			array_obj.freq = self.frequencies[0]
 		elif which_array.upper() == 'LFAH':
 			array_obj = LFAH_array()
-			skyobj.freq = self.frequencies[3]
+			array_obj.freq = self.frequencies[3]
 		elif which_array.upper() == 'LFAV':
 			array_obj = LFAV_array()
-			skyobj.freq = self.frequencies[4]
+			array_obj.freq = self.frequencies[4]
 		elif which_array.upper() == '4G1':
 			array_obj = FG1_array()
-			skyobj.freq = self.frequencies[4]
+			array_obj.freq = self.frequencies[1] 
 		elif which_array.upper() == '4G2':
 			array_obj = FG2_array()
-			skyobj.freq = self.frequencies[3]
+			array_obj.freq = self.frequencies[2]
 		elif which_array.upper() == '4G3':
 			array_obj = FG3_array()
-			skyobj.freq = self.frequencies[2]
+			array_obj.freq = self.frequencies[3]
 		elif which_array.upper() == '4G4':
 			array_obj = FG4_array()
-			skyobj.freq = self.frequencies[1]
+			array_obj.freq = self.frequencies[4]
 		else:
 			print('ERROR: '+which_array+' is not a valid array. Please set to be either HFA, LFAH, LFAV, 4G1, 4G2, 4G3, or 4G4')
 			return
 		if type != '': #Manually set type (important for array OTF and honeycomb maps) if not the primary frequency
 			array_obj.type = type
 		#Determine the map type then paint the array
+		print('map_type = ', self.map_type)
+		print('nod_type = ', self.nod_type)
 		if self.map_type == 'GREAT_SP':
 			array_obj.single_point(skyobj, x=self.x, y=self.y, time=self.time, array_angle=self.array_angle, cycles=self.cycles)
 		elif self.map_type == 'GREAT_Raster' or self.map_type == 'GREAT_OTF':
@@ -209,6 +212,7 @@ class aor:
 		elif self.map_type == 'GREAT_ON_THE_FLY_HONEYCOMB_MAP':
 			array_obj.honeycomb(skyobj, x=self.x, y=self.y, array_angle=self.array_angle, map_angle=self.map_angle, cycles=self.cycles, time=self.time)
 		elif self.map_type == 'GREAT_ON_THE_FLY_ARRAY_MAPPING':
+			
 			if self.nod_type == 'Total_Power': #Set a few parameters to ensure proper calculation of Total Power Array OTF maps
 				skyobj.TPOTF = True
 				skyobj.Non = self.Non
