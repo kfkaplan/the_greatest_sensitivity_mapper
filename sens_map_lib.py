@@ -170,7 +170,7 @@ class aor:
 				self.y_blocks_perp = int(instr_data['YMapNumBlocksX'])
 		else:
 			print('ERROR: '+self.map_type+' is not a valid map type to paint in the sky.')
-	def paint(self, skyobj, which_array): #Paint AOR onto sky object with specified array ("HFA", "LFA", or "4GREAT")
+	def paint(self, skyobj, which_array, type=''): #Paint AOR onto sky object with specified array ("HFA", "LFA", or "4GREAT")
 		# #Determine which array to use and generate the appropriate object
 		if which_array.upper() == 'HFA':
 			array_obj = HFA_array()
@@ -196,6 +196,8 @@ class aor:
 		else:
 			print('ERROR: '+which_array+' is not a valid array. Please set to be either HFA, LFAH, LFAV, 4G1, 4G2, 4G3, or 4G4')
 			return
+		if type != '': #Manually set type (important for array OTF and honeycomb maps) if not the primary frequency
+			array_obj.type = type
 		#Determine the map type then paint the array
 		if self.map_type == 'GREAT_SP':
 			array_obj.single_point(skyobj, x=self.x, y=self.y, time=self.time, array_angle=self.array_angle, cycles=self.cycles)
