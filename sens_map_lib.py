@@ -492,13 +492,13 @@ class GREAT_array:
 		for this_array_profile in self.array_profile: #Loop through each individual beam in array
 			chunk_of_array_profile = this_array_profile(skyobj.x[iy1:iy2, ix1:ix2], skyobj.y[iy1:iy2, ix1:ix2]) #Isolate the beam profile on the sky to use 
 			sum_chunk_of_array_profile = bn.nansum(chunk_of_array_profile)
-			#if np.size(chunk_of_array_profile) > 0: #Error catch, only record beams that are inside the sky map
-			convolved_signal = bn.nansum(chunk_of_signal * chunk_of_array_profile) / sum_chunk_of_array_profile #Convovle assumed signal on sky with beam profile
-			skyobj.x_beam.append(this_array_profile.x_mean.value) #Save position, convolved signal, and exposure time for each beam in a list of the sky object for later regridding
-			skyobj.y_beam.append(this_array_profile.y_mean.value)
-			skyobj.exptime_beam.append(time * cycles)
-			skyobj.signal_beam.append(convolved_signal * time * cycles)
-			skyobj.beam_profiles.append(this_array_profile)
+			if np.size(chunk_of_array_profile) > 0: #Error catch, only record beams that are inside the sky map
+				convolved_signal = bn.nansum(chunk_of_signal * chunk_of_array_profile) / sum_chunk_of_array_profile #Convovle assumed signal on sky with beam profile
+				skyobj.x_beam.append(this_array_profile.x_mean.value) #Save position, convolved signal, and exposure time for each beam in a list of the sky object for later regridding
+				skyobj.y_beam.append(this_array_profile.y_mean.value)
+				skyobj.exptime_beam.append(time * cycles)
+				skyobj.signal_beam.append(convolved_signal * time * cycles)
+				skyobj.beam_profiles.append(this_array_profile)
 	##### backup of old paint method
 	# def paint(self, skyobj, time=1.0, cycles=1, TPOTF=False): #Paint a single instance of the array profile onto a sky object, this is the base for all observation types including single pointing and maps
 	# 	#skyobj.total_exptime += time*cycles #Add exposure time from this to the total
