@@ -349,14 +349,19 @@ class sky:
 			self.TPOTF = True
 			self.Non = Non
 		if deltav > 0: #If user specifies the size of the spectral element in km/s, use that to calculate deltafreq instead of deltafreq being provided
-				deltafreq = (deltav / 299792.458) * self.freq
+				self.deltafreq = (deltav / 299792.458) * self.freq
+		else:
+			self.deltafreq = deltafreq
 				# print('self.freq = ', self.freq)
 				# print('deltafreq = ', deltafreq)
 		if not self.TPOTF: #If not a Total Power OTF map (most observations)...
-			noise = (2.0 * Tsys) / ((deltafreq)**0.5) #Calulate RMS temperature (noise) using Equation 6-5 in the observer's handbook
+			noise_for_one_second = (2.0 * Tsys) / ((self.deltafreq)**0.5) #Calulate RMS temperature (noise) using Equation 6-5 in the observer's handbook
 		else: #If a Total Power Array OTF map....
-			noise = Tsys * (1.0 + self.Non**-0.5)**0.5 / (deltafreq)**0.5 #Calculate RMS temp. (noise) for TP OTF maps
+			noise_for_one_second = Tsys * (1.0 + self.Non**-0.5)**0.5 / (self.deltafreq)**0.5 #Calculate RMS temp. (noise) for TP OTF maps
+		self.noise_for_one_second = noise_for_one_second #tore the noise for one second in case it is needed for later recalculations
 
+		self.noise_beam = noise_for_one_second / exptime_array
+		self.s2n_beam = signal_array / self.noise_beam
 		#noise_array = noise_array * exptime_array
 		# noise_array = noise #/ (exptime_array**0.5)
 		# print('Noise per beam', noise_array)
@@ -364,7 +369,7 @@ class sky:
 		# print('S/N per beam', signal_array/noise_array)
 		# print()
 		total_beam_signal = bn.nansum(signal_array/exptime_array)
-		total_beam_noise = bn.nansum((noise*len(signal_array))**2/exptime_array)**0.5
+		total_beam_noise = bn.nansum((noise_for_one_second*len(signal_array))**2/exptime_array)**0.5
 		print('Total beam signal:', total_beam_signal)
 		print('Total beam noise:', total_beam_noise)
 		print('Total beam S/N:', total_beam_signal/total_beam_noise)
@@ -392,6 +397,7 @@ class sky:
 		for ix, x in enumerate(self.x_1d): #Loop through each pixel in the sky object and use a kernel with 1/3 the FWHM of the beam size to 
 			for iy, y in enumerate(self.y_1d):
 				weights = gauss2d(xpos=x_array, ypos=y_array, x=x, y=y, stddev=one_third_stddev) #Generate weights for this position using the kernel
+				weights = weights / bn.nansum(weights) #Normalize weights
 				self.data[iy, ix] = bn.nansum(signal_array * weights) #Convolve simualted signal on sky with kernel to claculate signal at this pixel
 				self.exptime[iy, ix] = bn.nansum(exptime_array * weights)#/self.plate_scale**2 #Convolve exposure time with kernel to calulate the exposure time for this specific pixel
 				#exptime_weighted_for_noise[iy, ix] = bn.nansum(exptime_array * weights**0.5)
@@ -402,7 +408,7 @@ class sky:
 		self.data = self.data / (self.exptime) #normalize simulated data by exposure time
 		#self.noise = (convolved_variance / self.exptime)**0.5
 		#self.noise = noise  / ((self.exptime * self.plate_scale**2)**0.5)
-		self.noise = noise  / ((self.exptime)**0.5)
+		self.noise = self.noise_for_one_second  / ((self.exptime)**0.5)
 
 		print('Total S/N: ',self.s2n())
 	def input(self, model_shape): #Draw an astropy model shape onto  sigal (e.g. create a model of the "true" signal)
@@ -421,10 +427,19 @@ class sky:
 		self.y = y #2D y coords
 		self.x_1d = self.x[0,:] #Grab 1D arrays for x and y coordinates
 		self.y_1d = self.y[:,0]
-		self.data = block_reduce(self.data, factor, func=np.nanmean) #Resample all grids using astropy block_reduce
-		self.noise = block_reduce(self.noise**2, factor, func=np.nanmean)**0.5 / factor #Note the 1/factor is actually 1/sqrt(factor*^2) since factor^2 is the number of pixels being averaged together
-		self.exptime = block_reduce(self.exptime, factor, func=np.nanmean)
-		self.signal = block_reduce(self.signal, factor, func=np.nanmean)
+		#Resample all grids using astropy block_reduce
+		#total_data_unreduced = bn.nansum(self.data) #Resample data normalized to the total value (ie. T_a won't change)
+		self.data = block_reduce(self.data, factor)  / float(factor**2)
+		#total_data_reduced = bn.nansum(self.data)
+		#print('Block reduce ratio = ', total_data_unreduced / total_data_reduced)
+		#self.data = self.data * (total_data_unreduced / total_data_reduced)
+		#Resample signal (treat like the data)
+		#total_signal_unreduced = bn.nansum(self.signal) #Resample data normalized to the total value (ie. T_a won't change)
+		self.signal = block_reduce(self.signal, factor)  / float(factor**2)
+		#total_signal_reduced = bn.nansum(self.signal)
+		#self.signal = self.signal * (total_signal_unreduced / total_signal_reduced)
+		self.exptime = block_reduce(self.exptime, factor)  #Resample exposure time (here we just sum, no normalization)
+		self.noise = self.noise_for_one_second / self.exptime**0.5 #Recalculate noise using the new exposure time grid
 		print('Total S/N: ',self.s2n())
 	def s2n(self, s2n_cut=1e-5): #Return total signal-to-noise value as a sanity check
 		goodpix = np.isfinite(self.noise) & np.isfinite(self.data)# & (self.data/self.noise > s2n_cut)
