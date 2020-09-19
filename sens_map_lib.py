@@ -178,10 +178,10 @@ class aor:
 			array_obj.freq = self.frequencies[0]
 		elif which_array.upper() == 'LFAH':
 			array_obj = LFAH_array()
-			array_obj.freq = self.frequencies[3]
+			array_obj.freq = self.frequencies[1]
 		elif which_array.upper() == 'LFAV':
 			array_obj = LFAV_array()
-			array_obj.freq = self.frequencies[4]
+			array_obj.freq = self.frequencies[2]
 		elif which_array.upper() == '4G1':
 			array_obj = FG1_array()
 			array_obj.freq = self.frequencies[1] 
@@ -341,6 +341,8 @@ class sky:
 		exptime_array = np.array(self.exptime_beam)
 		convolved_variance = np.zeros(np.shape(self.data))
 
+		self.total_exptime = bn.nansum(exptime_array)
+
 		noise_array = np.zeros(len(x_array))
 
 
@@ -396,7 +398,7 @@ class sky:
 
 		for ix, x in enumerate(self.x_1d): #Loop through each pixel in the sky object and use a kernel with 1/3 the FWHM of the beam size to 
 			for iy, y in enumerate(self.y_1d):
-				weights = gauss2d(xpos=x_array, ypos=y_array, x=x, y=y, stddev=one_third_stddev) #Generate weights for this position using the kernel
+				weights = gauss2d(amplitude=1.0, xpos=x_array, ypos=y_array, x=x, y=y, stddev=one_third_stddev) #Generate weights for this position using the kernel
 				weights = weights / bn.nansum(weights) #Normalize weights
 				self.data[iy, ix] = bn.nansum(signal_array * weights) #Convolve simualted signal on sky with kernel to claculate signal at this pixel
 				self.exptime[iy, ix] = bn.nansum(exptime_array * weights)#/self.plate_scale**2 #Convolve exposure time with kernel to calulate the exposure time for this specific pixel
@@ -406,6 +408,8 @@ class sky:
 				#convolved_variance[iy, ix] = bn.nansum(noise_array**2 * exptime_array * weights)
 
 		self.data = self.data / (self.exptime) #normalize simulated data by exposure time
+
+		self.exptime = self.total_exptime * self.exptime / bn.nansum(self.exptime)
 		#self.noise = (convolved_variance / self.exptime)**0.5
 		#self.noise = noise  / ((self.exptime * self.plate_scale**2)**0.5)
 		self.noise = self.noise_for_one_second  / ((self.exptime)**0.5)
