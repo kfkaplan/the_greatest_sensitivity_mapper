@@ -200,8 +200,8 @@ class aor:
 		if type != '': #Manually set type (important for array OTF and honeycomb maps) if not the primary frequency
 			array_obj.type = type
 		#Determine the map type then paint the array
-		print('map_type = ', self.map_type)
-		print('nod_type = ', self.nod_type)
+		# print('map_type = ', self.map_type)
+		# print('nod_type = ', self.nod_type)
 		if self.map_type == 'GREAT_SP':
 			array_obj.single_point(skyobj, x=self.x, y=self.y, time=self.time, array_angle=self.array_angle, cycles=self.cycles)
 		elif self.map_type == 'GREAT_Raster' or self.map_type == 'GREAT_OTF':
