@@ -14,6 +14,7 @@ from astropy.modeling import models
 from astropy.nddata.utils import block_reduce
 import xmltodict #For reading in AORs
 #import timeit #used for profiling code
+from numba import jit #For optimizing code
 
 
 try:  #Try to import bottleneck library, this greatly speeds up things such as nanmedian, nanmax, and nanmin
@@ -56,18 +57,33 @@ honeycomb_pattern = np.array([
 	[-2.00000, -1.73205], #25
 	])
 
-
+#@jit(nopython=True)
 def fwhm2std(fwhm): #Convert FWHM to stddev (for a gaussian)
 	return   fwhm / (2.0 * np.sqrt(2.0 * np.log(2.0)))
 
-
+#@jit(nopython=True)
 def std2fwhm(stddev): #Convert stddev to FWHM  (for a gaussian)
 	return   stddev * (2.0 * np.sqrt(2.0 * np.log(2.0)))
 
 
+@jit(nopython=True)
 def gauss2d(xpos=0.0, ypos=0.0, x=0.0, y=0.0, stddev=1.0, amplitude=1.0): #2D gaussian kernel (not normalized)
 	return amplitude * np.exp(-((xpos-x)**2 + (ypos-y)**2) / (2.0 * stddev**2))
 
+
+@jit(nopython=True)
+def generate_simulated_observation(array_shape, one_third_stddev, x_1d, y_1d, x_array, y_array, signal_array, exptime_array):
+	data = np.zeros(array_shape)
+	exptime = np.zeros(array_shape)
+	nx = len(x_1d)
+	for ix, x in enumerate(x_1d): #Loop through each pixel in the sky object and use a kernel with 1/3 the FWHM of the beam size to 
+		for iy, y in enumerate(y_1d):
+			weights = gauss2d(amplitude=1.0, xpos=x_array, ypos=y_array, x=x, y=y, stddev=one_third_stddev) #Generate weights for this position using the kernel
+			weights /= np.nansum(weights) #Normalize weights
+			data[iy, ix] = np.nansum(signal_array * weights) #Convolve simualted signal on sky with kernel to claculate signal at this pixel
+			exptime[iy, ix] = np.nansum(exptime_array * weights)#/self.plate_scale**2 #Convolve exposure time with kernel to calulate the exposure time for this specific pixel
+		print('profile ix/nx = ',ix,'/',nx)
+	return data, exptime
 
 
 # def get_deltaTa(Tsys=0., deltafreq=1.0, Non=1.0, time=1.0, TPOTF=False): #Get the RMS antenna temperature (delta-Ta) for a single pointing (when time on = time off)
@@ -330,9 +346,9 @@ class sky:
 	# 	scale_by = (self.total_exptime/self.pixel_area) / np.nansum(self.data)
 	# 	self.data *= scale_by
 	# 	self.noise *= scale_by
-	def simulate_observation(self, Tsys=0., deltafreq=1e6, deltav=0., TPOTF=False, Non=1): #Calculate noise and smooth the data and noisea by convolving with a 2D gausasian kernel with a FHWM that is 1/3 the beam profile, this is the final step for simulating data
-		
-
+	def simulate_observation(self, Tsys=0., deltafreq=1e6, deltav=0., TPOTF=False, Non=1, freq=0.): #Calculate noise and smooth the data and noisea by convolving with a 2D gausasian kernel with a FHWM that is 1/3 the beam profile, this is the final step for simulating data
+		if freq !=0.: #Allow user to manually set frequency
+			self.freq = freq
 
 		one_third_stddev = fwhm2std(self.fwhm) / 3.0 #Set up convolving kerneal for cygrid to be a 2D guassian with 1/3 the FWHM of the beam profiles
 		x_array = np.array(self.x_beam) 
@@ -394,25 +410,36 @@ class sky:
 		# 	chunk_of_array_profile = self.beam_profiles[i](self.x, self.y) #Isolate the beam profile on the sky to use 
 		# 	sum_chunk_of_array_profile = bn.nansum(chunk_of_array_profile)
 		# 	variance_array[i] = bn.nansum(variance * chunk_of_array_profile) / sum_chunk_of_array_profile #Convovle assumed signal on sky with beam profile
+		array_shape = np.shape(self.data)
+		nx = array_shape[0]
+		#data = np.zeros(array_shape)
+		#exptime = np.zeros(array_shape)
 
+		data, exptime = generate_simulated_observation(array_shape, one_third_stddev, self.x_1d, self.y_1d, x_array, y_array, signal_array, exptime_array)
 
-		for ix, x in enumerate(self.x_1d): #Loop through each pixel in the sky object and use a kernel with 1/3 the FWHM of the beam size to 
-			for iy, y in enumerate(self.y_1d):
-				weights = gauss2d(amplitude=1.0, xpos=x_array, ypos=y_array, x=x, y=y, stddev=one_third_stddev) #Generate weights for this position using the kernel
-				weights = weights / bn.nansum(weights) #Normalize weights
-				self.data[iy, ix] = bn.nansum(signal_array * weights) #Convolve simualted signal on sky with kernel to claculate signal at this pixel
-				self.exptime[iy, ix] = bn.nansum(exptime_array * weights)#/self.plate_scale**2 #Convolve exposure time with kernel to calulate the exposure time for this specific pixel
-				#exptime_weighted_for_noise[iy, ix] = bn.nansum(exptime_array * weights**0.5)
-				#convolved_variance[iy, ix] = bn.nansum(variance_array * weights)
+		# for ix, x in enumerate(self.x_1d): #Loop through each pixel in the sky object and use a kernel with 1/3 the FWHM of the beam size to 
+		# 	for iy, y in enumerate(self.y_1d):
+		# 		weights = gauss2d(amplitude=1.0, xpos=x_array, ypos=y_array, x=x, y=y, stddev=one_third_stddev) #Generate weights for this position using the kernel
+		# 		weights /= bn.nansum(weights) #Normalize weights
+		# 		data[iy, ix] = bn.nansum(signal_array * weights) #Convolve simualted signal on sky with kernel to claculate signal at this pixel
+		# 		exptime[iy, ix] = bn.nansum(exptime_array * weights)#/self.plate_scale**2 #Convolve exposure time with kernel to calulate the exposure time for this specific pixel
+		# 		#self.data[iy, ix] = bn.nansum(signal_array * weights) #Convolve simualted signal on sky with kernel to claculate signal at this pixel
+		# 		#self.exptime[iy, ix] = bn.nansum(exptime_array * weights)#/self.plate_scale**2 #Convolve exposure time with kernel to calulate the exposure time for this specific pixel
+		# 		#exptime_weighted_for_noise[iy, ix] = bn.nansum(exptime_array * weights**0.5)
+		# 		#convolved_variance[iy, ix] = bn.nansum(variance_array * weights)
 
-				#convolved_variance[iy, ix] = bn.nansum(noise_array**2 * exptime_array * weights)
+		# 		#convolved_variance[iy, ix] = bn.nansum(noise_array**2 * exptime_array * weights)
+		# 	print('profile ix/nx = ',ix,'/',nx)
 
-		self.data = self.data / (self.exptime) #normalize simulated data by exposure time
-
-		self.exptime = self.total_exptime * self.exptime / bn.nansum(self.exptime)
+		#self.data /= (self.exptime) #normalize simulated data by exposure time
+		#self.exptime *= self.total_exptime / bn.nansum(self.exptime)
+		data /= (self.exptime) #normalize simulated data by exposure time
+		exptime *= self.total_exptime / bn.nansum(exptime)
 		#self.noise = (convolved_variance / self.exptime)**0.5
 		#self.noise = noise  / ((self.exptime * self.plate_scale**2)**0.5)
-		self.noise = self.noise_for_one_second  / ((self.exptime)**0.5)
+		self.data = data
+		self.exptime = exptime
+		self.noise = self.noise_for_one_second  / ((exptime)**0.5)
 
 		print('Total S/N: ',self.s2n())
 	def input(self, model_shape): #Draw an astropy model shape onto  sigal (e.g. create a model of the "true" signal)
@@ -514,8 +541,10 @@ class GREAT_array:
 		if paint_ymax > sky_ymax: paint_ymax = sky_ymax
 		ix2, ix1, iy1, iy2 = skyobj.get_range_indicies(paint_xmin, paint_xmax, paint_ymin, paint_ymax)  #Grab the indicies for the pixels on the sky over witch to paint onto (NOTE: x axis is inverted because RA increases to the left)
 		chunk_of_signal = skyobj.signal[iy1:iy2, ix1:ix2] #Isolate the chunk of the signal array for painting at this particular position
+		chunk_of_x = skyobj.x[iy1:iy2, ix1:ix2]
+		chunk_of_y = skyobj.y[iy1:iy2, ix1:ix2]
 		for this_array_profile in self.array_profile: #Loop through each individual beam in array
-			chunk_of_array_profile = this_array_profile(skyobj.x[iy1:iy2, ix1:ix2], skyobj.y[iy1:iy2, ix1:ix2]) #Isolate the beam profile on the sky to use 
+			chunk_of_array_profile = this_array_profile(chunk_of_x, chunk_of_y) #Isolate the beam profile on the sky to use 
 			sum_chunk_of_array_profile = bn.nansum(chunk_of_array_profile)
 			if np.size(chunk_of_array_profile) > 0: #Error catch, only record beams that are inside the sky map
 				convolved_signal = bn.nansum(chunk_of_signal * chunk_of_array_profile) / sum_chunk_of_array_profile #Convovle assumed signal on sky with beam profile
