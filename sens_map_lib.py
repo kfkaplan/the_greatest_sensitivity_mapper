@@ -79,7 +79,7 @@ def run_simulate_observation(x1d, y1d, x_array, y_array, signal_array, exptime_a
 			#weights = gauss2d_simulate_obs(amplitude=1.0, xpos=x_array, ypos=y_array, x=x, y=y, stddev=one_third_stddev) #Generate weights for this position using the kernel
 			weights = 1.0 * np.exp(-((x_array-x)**2 + (y_array-y)**2) / (2.0 * one_third_stddev**2))#Generate weights for this position using the kernel
 			#weights[~np.isfinite(weights)] = np.nan
-			weights /= np.nansum(weights) #normalize weights
+			#weights /= np.nansum(weights) #normalize weights
 			data[iy, ix] = np.nansum(signal_array * weights) #Convolve simualted signal on sky with kernel to claculate signal at this pixel
 			exptime[iy, ix] = np.nansum(exptime_array * weights)#Convolve exposure time with kernel to calulate the exposure time for this specific pixel
 		print('Progress:', ix/nx)
@@ -225,7 +225,7 @@ class aor:
 			if self.map_type == 'GREAT_OTF' and self.nod_type == 'Total_Power':  #Set a few parameters to ensure proper calculation of Total Power OTF maps
 				skyobj.TPOTF = True
 				skyobj.Non = self.Non
-			array_obj.map(skyobj, x=self.x, y=self.y, nx=self.nx, ny=self.ny, dx=self.dx, dy=self.dy, array_angle=self.array_angle, cycles=self.cycles, time=self.time)
+			array_obj.map(skyobj, x=self.x, y=self.y, nx=self.nx, ny=self.ny, dx=self.dx, dy=self.dy, array_angle=self.array_angle, map_angle=self.map_angle, cycles=self.cycles, time=self.time)
 		elif self.map_type == 'GREAT_ON_THE_FLY_HONEYCOMB_MAP':
 			array_obj.honeycomb(skyobj, x=self.x, y=self.y, array_angle=self.array_angle, map_angle=self.map_angle, cycles=self.cycles, time=self.time)
 		elif self.map_type == 'GREAT_ON_THE_FLY_ARRAY_MAPPING':
