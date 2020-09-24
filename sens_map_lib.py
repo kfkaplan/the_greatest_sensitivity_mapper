@@ -10,6 +10,7 @@ from scipy.interpolate import interp1d
 from matplotlib import pyplot
 #from astropy.io import fits
 from astropy.modeling import models
+from astropy.convolution import Gaussian2DKernel, convolve
 #from astropy.coordinates import SkyCoord
 from astropy.nddata.utils import block_reduce
 import xmltodict #For reading in AORs
@@ -465,6 +466,12 @@ class sky:
 		self.exptime = block_reduce(self.exptime, factor)  #Resample exposure time (here we just sum, no normalization)
 		self.noise = self.noise_for_one_second / self.exptime**0.5 #Recalculate noise using the new exposure time grid
 		print('Total S/N: ',self.s2n())
+	def gaussian_smooth(self, fwhm): #Gaussian smooth to a stated FWHM, useful for visualizing binned data without downsizing or smoothing out artifacts, can be done before downsampling
+		standard_deviation = fwhm2std(fwhm)
+		kernel = Gaussian2DKernel(x_stddev=standard_deviation, y_stddev=standard_deviation)
+		self.data = convolve(self.data, kernel) #Gaussian smooth data
+		self.exptime = convolve(self.data, kernel) #Gaussian smooth exposure time
+		self.noise = self.noise_for_one_second / self.exptime**0.5 #Recalculate noise
 	def s2n(self, s2n_cut=1e-5): #Return total signal-to-noise value as a sanity check
 		goodpix = np.isfinite(self.noise) & np.isfinite(self.data)# & (self.data/self.noise > s2n_cut)
 		total_signal = bn.nansum(self.data[goodpix])
