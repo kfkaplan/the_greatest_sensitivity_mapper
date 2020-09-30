@@ -469,8 +469,8 @@ class sky:
 	def gaussian_smooth(self, fwhm): #Gaussian smooth to a stated FWHM, useful for visualizing binned data without downsizing or smoothing out artifacts, can be done before downsampling
 		standard_deviation = fwhm2std(fwhm)
 		kernel = Gaussian2DKernel(x_stddev=standard_deviation, y_stddev=standard_deviation)
-		self.data = convolve(self.data, kernel) #Gaussian smooth data
-		self.exptime = convolve(self.data, kernel) #Gaussian smooth exposure time
+		self.data = convolve(self.data, kernel, boundary='extend') #Gaussian smooth data
+		self.exptime = convolve(self.data, kernel, boundary='extend') #Gaussian smooth exposure time
 		self.noise = self.noise_for_one_second / self.exptime**0.5 #Recalculate noise
 	def s2n(self, s2n_cut=1e-5): #Return total signal-to-noise value as a sanity check
 		goodpix = np.isfinite(self.noise) & np.isfinite(self.data)# & (self.data/self.noise > s2n_cut)
