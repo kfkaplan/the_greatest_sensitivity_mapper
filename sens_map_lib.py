@@ -12,7 +12,7 @@ from matplotlib import pyplot
 from astropy.modeling import models
 from astropy.convolution import Gaussian2DKernel, convolve
 #from astropy.coordinates import SkyCoord
-from astropy.nddata.utils import block_reduce
+from astropy.nddata.blocks import block_reduce
 import xmltodict #For reading in AORs
 #import timeit #used for profiling code
 from numba import jit
