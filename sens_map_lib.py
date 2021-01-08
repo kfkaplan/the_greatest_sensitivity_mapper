@@ -16,6 +16,7 @@ from astropy.nddata.blocks import block_reduce
 import xmltodict #For reading in AORs
 #import timeit #used for profiling code
 from numba import jit
+import ipywidgets
 
 
 try:  #Try to import bottleneck library, this greatly speeds up things such as nanmedian, nanmax, and nanmin
@@ -83,7 +84,7 @@ def run_simulate_observation(x1d, y1d, x_array, y_array, signal_array, exptime_a
 			#weights /= np.nansum(weights) #normalize weights
 			data[iy, ix] = np.nansum(signal_array * weights) #Convolve simualted signal on sky with kernel to claculate signal at this pixel
 			exptime[iy, ix] = np.nansum(exptime_array * weights)#Convolve exposure time with kernel to calulate the exposure time for this specific pixel
-		print('Progress:', ix/nx)
+		#print('Progress:', ix/nx)
 	return data, exptime
 
 
@@ -103,9 +104,33 @@ def find_nearest(arr, value):
 
 
 #Reads in a .aor file and returns aor objects (see aor class below) for each aor in the file
-def open_aors(filename):
+def open_aors(user_input):
 	#The following code from Ed Chambers' aor_inpar_translator.py was plundered on the high seas by the nortorious software pirate knwon as Kyle Kaplan
 	#who then proceeded to modify it without approval of the Gov'ner or the Crown™.
+	#print('the input type is', type(user_input))
+	if type(input) == str: #If user input is a file path
+		aor_file = open(user_input, 'rb') #Open .aor file
+		xml_dict = xmltodict.parse(aor_file) #Parse the xml from the .aor file into python dictionaries so we can grab information out of them
+		aor_file.close() #close .aor file
+	elif type(user_input) == ipywidgets.widgets.widget_upload.FileUpload: #Else if user input is a file upload widget
+		xml_dict = xmltodict.parse(user_input.data[0])  #Parse the xml from the .aor file into python dictionaries so we can grab information out of them
+	else:
+		print("WARNING: User input type "+str(type(user_input)) + "is not a valid parameter for open_aors.  User input must be a file path string or file upload widget.")
+	aor_dict_list = []
+	if type(xml_dict['AORs']['list']['vector']['Request']) == list: #multiple aors in .aor file, 
+		for aor_dict in xml_dict['AORs']['list']['vector']['Request']:
+			aor_dict_list.append(aor_dict)
+	else:
+		# one aor in .aor file
+		aor_dict = xml_dict['AORs']['list']['vector']['Request']
+		aor_dict_list.append(aor_dict)
+	aor_list = []
+	for aor_dict in aor_dict_list: #Loop through each aor python dictionary and create an aor object that stores the relavent information
+		aor_list.append(aor(aor_dict))
+	return aor_list
+
+#Reads in a .aor file that was previously opened as a binary (for use with ipython widgets file upload)
+def open_aors_binary(data):
 	aor_file = open(filename, 'rb') #Open .aor file
 	xml_dict = xmltodict.parse(aor_file) #Parse the xml from the .aor file into python dictionaries so we can grab information out of them
 	aor_file.close() #close .aor file
@@ -122,9 +147,6 @@ def open_aors(filename):
 		aor_list.append(aor(aor_dict))
 	return aor_list
 
-
-
-
 #Class that the relavent array into and information necessory to paint an array onto the sky
 class aor:
 	def __init__(self, aor_dict): #Contstruct aor object
@@ -137,6 +159,7 @@ class aor:
 		self.map_type = aor_dict['instrument']['@class'].split('.')[-1] #'GREAT_SP', 'GREAT_Raster', 'GREAT_OTF', 'GREAT_ON_THE_FLY_HONEYCOMB_MAP', or 'GREAT_ON_THE_FLY_ARRAY_MAPPING'
 		self.cycles = float(instr_data['Repeat'])
 		self.array_angle = float(instr_data['ArrayRotationAngle'])
+		self.primary_frequency = instr_data['PrimaryFrequency']
 		frequencies = [] #Grab  frequencies 1,2,3,4,5
 		frequencies.append(float(instr_data['Frequency']) * 1e9) #HFA
 		frequencies.append(float(instr_data['Frequency2']) * 1e9) #4G4
@@ -145,6 +168,7 @@ class aor:
 		frequencies.append(float(instr_data['Frequency5']) * 1e9) #4G1 or LFAV
 		self.frequencies = frequencies #
 		self.aor_id = instr_data['aorID'] #Carry the aor ID through so it is easier to identify what is what
+		self.Non = 1
 		if self.map_type == 'GREAT_SP': #Grab mapping parameters
 			self.time = 0.5 * float(instr_data['TotalTime'])
 			self.x = float(instr_data['TargetOffsetRA'])
@@ -161,7 +185,10 @@ class aor:
 			self.y = float(instr_data['MapCenterOffsetDec'])
 			self.nod_type = instr_data['NodType'] #'Total_Power', 'Dual_Beam_Switch', ect.
 			if self.nod_type == 'Total_Power':
-				self.Non = float(instr_data['LinesPerOff'])
+				if self.map_type == 'GREAT_Raster':
+					self.Non = float(instr_data['OnsPerOff'])
+				elif self.map_type == 'GREAT_OTF':
+					self.Non = float(instr_data['LinesPerOff'])
 		elif self.map_type == 'GREAT_ON_THE_FLY_HONEYCOMB_MAP':
 			self.time = float(instr_data['TimePerPoint'])
 			self.map_angle = float(instr_data['ArrayRotationAngle'])
@@ -223,7 +250,8 @@ class aor:
 		if self.map_type == 'GREAT_SP':
 			array_obj.single_point(skyobj, x=self.x, y=self.y, time=self.time, array_angle=self.array_angle, cycles=self.cycles)
 		elif self.map_type == 'GREAT_Raster' or self.map_type == 'GREAT_OTF':
-			if self.map_type == 'GREAT_OTF' and self.nod_type == 'Total_Power':  #Set a few parameters to ensure proper calculation of Total Power OTF maps
+			#if self.map_type == 'GREAT_OTF' and self.nod_type == 'Total_Power':  #Set a few parameters to ensure proper calculation of Total Power OTF maps
+			if self.nod_type == 'Total_Power':  #Set a few parameters to ensure proper calculation of Total Power OTF (or raster) maps
 				skyobj.TPOTF = True
 				skyobj.Non = self.Non
 			array_obj.map(skyobj, x=self.x, y=self.y, nx=self.nx, ny=self.ny, dx=self.dx, dy=self.dy, array_angle=self.array_angle, map_angle=self.map_angle, cycles=self.cycles, time=self.time)
@@ -245,6 +273,8 @@ class aor:
 #Class that stores the 2D array representing the sky and it's associated coordinate system
 class sky:
 	def __init__(self, x_range, y_range, plate_scale): #, Tsky=178.0, Ttel=188.0, deltaTa=0.):
+		self.update(x_range, y_range, plate_scale)
+	def update(self, x_range, y_range, plate_scale): #Initialize or update sky object
 		if np.size(x_range) == 1:
 			x_range = [0.0, x_range]
 		if np.size(y_range) == 1:
