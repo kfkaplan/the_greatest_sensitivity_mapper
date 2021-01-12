@@ -160,6 +160,10 @@ class aor:
 		self.cycles = float(instr_data['Repeat'])
 		self.array_angle = float(instr_data['ArrayRotationAngle'])
 		self.primary_frequency = instr_data['PrimaryFrequency']
+		if self.primary_frequency == 'Frequency1':
+			self.primary_frequency = 'HFA'
+		elif self.primary_frequency == 'Frequency2':
+			self.primary_frequency = 'LFAV'
 		frequencies = [] #Grab  frequencies 1,2,3,4,5
 		frequencies.append(float(instr_data['Frequency']) * 1e9) #HFA
 		frequencies.append(float(instr_data['Frequency2']) * 1e9) #4G4
@@ -194,6 +198,7 @@ class aor:
 			self.map_angle = float(instr_data['ArrayRotationAngle'])
 			self.x = float(instr_data['TargetOffsetRA'])
 			self.y = float(instr_data['TargetOffsetDec'])
+			self.nod_type = instr_data['NodType'] #'Total_Power', 'Dual_Beam_Switch', ect.
 		elif self.map_type == 'GREAT_ON_THE_FLY_ARRAY_MAPPING':
 			self.nod_type = instr_data['NodType'] #'Total_Power', 'Dual_Beam_Switch', ect.
 			self.Non = float(instr_data['LinesPerOff'])
@@ -256,6 +261,7 @@ class aor:
 				skyobj.Non = self.Non
 			array_obj.map(skyobj, x=self.x, y=self.y, nx=self.nx, ny=self.ny, dx=self.dx, dy=self.dy, array_angle=self.array_angle, map_angle=self.map_angle, cycles=self.cycles, time=self.time)
 		elif self.map_type == 'GREAT_ON_THE_FLY_HONEYCOMB_MAP':
+			array_obj.primary_frequency = self.primary_frequency
 			array_obj.honeycomb(skyobj, x=self.x, y=self.y, array_angle=self.array_angle, map_angle=self.map_angle, cycles=self.cycles, time=self.time)
 		elif self.map_type == 'GREAT_ON_THE_FLY_ARRAY_MAPPING':
 			
@@ -525,6 +531,7 @@ class GREAT_array:
 		self.y = 0. #In arcsec
 		self.fwhm = 0. #In arcsec
 		self.freq = 0. #In GHz
+		self.primary_frequency = '' #Primary frequency, used to define honeycomb step size from an aor
 	def position(self, x, y): #Move center of array to (x,y)
 		self.reset_position() #First zero position
 		for pixel in self.array_profile:
@@ -641,7 +648,11 @@ class GREAT_array:
 			honeycomb_multiplier = 6.34
 		elif HFA:
 			honeycomb_multiplier = 2.76
-		else:
+		elif self.primary_frequency == 'LFAV' or self.primary_frequency == 'LFAH':
+			honeycomb_multiplier = 6.34
+		elif self.primary_frequency == 'HFA':
+			honeycomb_multiplier = 2.76
+		else: 
 			if self.type == 'LFAV' or self.type == 'LFAH': 
 				honeycomb_multiplier = 6.34
 			if self.type == 'HFA':
