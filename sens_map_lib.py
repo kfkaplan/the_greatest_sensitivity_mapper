@@ -222,7 +222,7 @@ class aor:
 			print('ERROR: '+self.map_type+' is not a valid map type to paint in the sky.')
 	def paint(self, skyobj, which_array, type=''): #Paint AOR onto sky object with specified array ("HFA", "LFA", or "4GREAT")
 		# #Determine which array to use and generate the appropriate object
-		print('frequencies = ', self.frequencies)
+		# print('frequencies = ', self.frequencies)
 		if which_array.upper() == 'HFA':
 			array_obj = HFA_array()
 			array_obj.freq = self.frequencies[0]
@@ -426,9 +426,9 @@ class sky:
 		# print()
 		total_beam_signal = bn.nansum(signal_array/exptime_array)
 		total_beam_noise = bn.nansum((noise_for_one_second*len(signal_array))**2/exptime_array)**0.5
-		print('Total beam signal:', total_beam_signal)
-		print('Total beam noise:', total_beam_noise)
-		print('Total beam S/N:', total_beam_signal/total_beam_noise)
+		# print('Total beam signal:', total_beam_signal)
+		# print('Total beam noise:', total_beam_noise)
+		# print('Total beam S/N:', total_beam_signal/total_beam_noise)
 
 		#convolved_variance = np.zeros(np.shape(self.data))
 		# #Paint variance onto 2D variance array starting by making the variance point sources as narrow gaussians
@@ -471,7 +471,7 @@ class sky:
 		#self.noise = noise  / ((self.exptime * self.plate_scale**2)**0.5)
 		self.noise = self.noise_for_one_second  / ((self.exptime)**0.5)
 
-		print('Total S/N: ',self.s2n())
+		# print('Total S/N: ',self.s2n())
 	def input(self, model_shape): #Draw an astropy model shape onto  sigal (e.g. create a model of the "true" signal)
 		self.signal += model_shape(self.x, self.y)
 	def uniform(self, T): #Make sky grid have a uniform signal (mainly used for testing)
@@ -501,7 +501,7 @@ class sky:
 		#self.signal = self.signal * (total_signal_unreduced / total_signal_reduced)
 		self.exptime = block_reduce(self.exptime, factor)  #Resample exposure time (here we just sum, no normalization)
 		self.noise = self.noise_for_one_second / self.exptime**0.5 #Recalculate noise using the new exposure time grid
-		print('Total S/N: ',self.s2n())
+		# print('Total S/N: ',self.s2n())
 	def gaussian_smooth(self, fwhm): #Gaussian smooth to a stated FWHM, useful for visualizing binned data without downsizing or smoothing out artifacts, can be done before downsampling
 		standard_deviation = fwhm2std(fwhm)
 		kernel = Gaussian2DKernel(x_stddev=standard_deviation, y_stddev=standard_deviation)
@@ -512,8 +512,8 @@ class sky:
 		goodpix = np.isfinite(self.noise) & np.isfinite(self.data)# & (self.data/self.noise > s2n_cut)
 		total_signal = bn.nansum(self.data[goodpix])
 		total_noise = bn.nansum(self.noise[goodpix]**2)**0.5
-		print('total signal =',total_signal)
-		print('total noise = ', total_noise)
+		# print('total signal =',total_signal)
+		# print('total noise = ', total_noise)
 		return (total_signal / total_noise /np.size(self.data)**0.5) #/ self.area
 
 
