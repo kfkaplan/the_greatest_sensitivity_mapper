@@ -150,6 +150,7 @@ def open_aors_binary(data):
 #Class that the relavent array into and information necessory to paint an array onto the sky
 class aor:
 	def __init__(self, aor_dict): #Contstruct aor object
+		self.aor_dict = aor_dict #Carry the aor dictionary, mostly for debugging purposes
 		instr_data = aor_dict['instrument']['data']
 		# self.array1 = HFA_array()
 		# if instr_data['InstrumentSpectralElement2'] == 'GRE_LFA':
@@ -220,6 +221,8 @@ class aor:
 				self.y_blocks_perp = int(instr_data['YMapNumBlocksX'])
 		else:
 			print('ERROR: '+self.map_type+' is not a valid map type to paint in the sky.')
+
+
 	def paint(self, skyobj, which_array, type=''): #Paint AOR onto sky object with specified array ("HFA", "LFA", or "4GREAT")
 		# #Determine which array to use and generate the appropriate object
 		# print('frequencies = ', self.frequencies)
