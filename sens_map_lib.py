@@ -11,7 +11,8 @@ from matplotlib import pyplot
 #from astropy.io import fits
 from astropy.modeling import models
 from astropy.convolution import Gaussian2DKernel, convolve
-#from astropy.coordinates import SkyCoord
+from astropy.coordinates import SkyCoord
+from astropy import units
 from astropy.nddata.blocks import block_reduce
 import xmltodict #For reading in AORs
 #import timeit #used for profiling code
@@ -152,6 +153,7 @@ class aor:
 	def __init__(self, aor_dict): #Contstruct aor object
 		self.aor_dict = aor_dict #Carry the aor dictionary, mostly for debugging purposes
 		instr_data = aor_dict['instrument']['data']
+		targets = aor_dict['target']
 		# self.array1 = HFA_array()
 		# if instr_data['InstrumentSpectralElement2'] == 'GRE_LFA':
 		# 	self.array2 = LFA_array()
@@ -173,6 +175,8 @@ class aor:
 		frequencies.append(float(instr_data['Frequency5']) * 1e9) #4G1 or LFAV
 		self.frequencies = frequencies #
 		self.aor_id = instr_data['aorID'] #Carry the aor ID through so it is easier to identify what is what
+		self.target = targets['name']
+		self.skycoord = SkyCoord(ra=float(targets['position']['lon'])*units.degree, dec=float(targets['position']['lat'])*units.degree, frame='icrs')
 		self.Non = 1
 		if self.map_type == 'GREAT_SP': #Grab mapping parameters
 			self.time = 0.5 * float(instr_data['TotalTime'])
@@ -221,8 +225,9 @@ class aor:
 				self.y_blocks_perp = int(instr_data['YMapNumBlocksX'])
 		else:
 			print('ERROR: '+self.map_type+' is not a valid map type to paint in the sky.')
-
-
+	def target_offsets(self, input_aor): #Get offsets between two different AOR targets in arcsec in RA and Dec. (see https://docs.astropy.org/en/stable/api/astropy.coordinates.SkyCoord.html#astropy.coordinates.SkyCoord.spherical_offsets_to)
+		dra, ddec = self.skycoord.spherical_offsets_to(input_aor.skycoord)
+		return dra.to(units.arcsec).value, ddec.to(units.arcsec).value
 	def paint(self, skyobj, which_array, type=''): #Paint AOR onto sky object with specified array ("HFA", "LFA", or "4GREAT")
 		# #Determine which array to use and generate the appropriate object
 		# print('frequencies = ', self.frequencies)
