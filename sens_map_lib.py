@@ -240,20 +240,20 @@ class aor:
 		elif which_array.upper() == 'LFAV':
 			array_obj = LFAV_array()
 			array_obj.freq = self.frequencies[2]
-		elif which_array.upper() == '4G1':
+		elif which_array.upper() == '4G_1':
 			array_obj = FG1_array()
 			array_obj.freq = self.frequencies[1] 
-		elif which_array.upper() == '4G2':
+		elif which_array.upper() == '4G_2':
 			array_obj = FG2_array()
 			array_obj.freq = self.frequencies[2]
-		elif which_array.upper() == '4G3':
+		elif which_array.upper() == '4G_3':
 			array_obj = FG3_array()
 			array_obj.freq = self.frequencies[3]
-		elif which_array.upper() == '4G4':
+		elif which_array.upper() == '4G_4':
 			array_obj = FG4_array()
 			array_obj.freq = self.frequencies[4]
 		else:
-			print('ERROR: '+which_array+' is not a valid array. Please set to be either HFA, LFAH, LFAV, 4G1, 4G2, 4G3, or 4G4')
+			print('ERROR: '+which_array+' is not a valid array. Please set to be either HFA, LFAH, LFAV, 4G_1, 4G_2, 4G_3, or 4G_4')
 			return
 		if type != '': #Manually set type (important for array OTF and honeycomb maps) if not the primary frequency
 			array_obj.type = type
@@ -423,7 +423,6 @@ class sky:
 		else: #If a Total Power Array OTF map....
 			noise_for_one_second = Tsys * (1.0 + self.Non**-0.5)**0.5 / (self.deltafreq)**0.5 #Calculate RMS temp. (noise) for TP OTF maps
 		self.noise_for_one_second = noise_for_one_second #tore the noise for one second in case it is needed for later recalculations
-
 		self.noise_beam = noise_for_one_second / exptime_array
 		self.s2n_beam = signal_array / self.noise_beam
 		#noise_array = noise_array * exptime_array
@@ -471,9 +470,7 @@ class sky:
 		# 	print('Progress: ', ix / nx)
 
 		self.data, self.exptime = run_simulate_observation(self.x_1d, self.y_1d, x_array, y_array, signal_array, exptime_array, one_third_stddev, self.data, self.exptime)
-
 		self.data /= (self.exptime) #normalize simulated data by exposure time
-
 		self.exptime *= self.total_exptime / bn.nansum(self.exptime)
 		#self.noise = (convolved_variance / self.exptime)**0.5
 		#self.noise = noise  / ((self.exptime * self.plate_scale**2)**0.5)
@@ -811,7 +808,7 @@ class HFA_array(GREAT_array):
 
 #Child class to store array profile for 4GREAT 1, FWHM is from the ICD
 class FG1_array(GREAT_array):
-	def __init__(self, fwhm=50.0, type='4G1', amplitude=1.0, freq=550.0e9):
+	def __init__(self, fwhm=50.0, type='4G_1', amplitude=1.0, freq=550.0e9):
 		stddev = fwhm2std(fwhm) #Convert FWHM to stddev
 		pix0 =  models.Gaussian2D(amplitude=amplitude, x_mean=0.0, y_mean=0.0, x_stddev=stddev, y_stddev=stddev) #Define pixel profile
 		self.array_profile = [pix0]
@@ -827,7 +824,7 @@ class FG1_array(GREAT_array):
 
 #Child class to store array profile for 4GREAT 1, FWHM is from the ICD
 class FG2_array(GREAT_array):
-	def __init__(self, fwhm=30.0, type='4G2', amplitude=1.0, freq=980.0e9):
+	def __init__(self, fwhm=30.0, type='4G_2', amplitude=1.0, freq=980.0e9):
 		stddev = fwhm2std(fwhm) #Convert FWHM to stddev
 		pix0 =  models.Gaussian2D(amplitude=amplitude, x_mean=0.0, y_mean=0.0, x_stddev=stddev, y_stddev=stddev) #Define pixel profile
 		self.array_profile = [pix0]
@@ -842,7 +839,7 @@ class FG2_array(GREAT_array):
 
 #Child class to store array profile for 4GREAT 1, FWHM is from the ICD
 class FG3_array(GREAT_array):
-	def __init__(self, fwhm=19.0, type='4G3', amplitude=1.0, freq=1390.0e9):
+	def __init__(self, fwhm=19.0, type='4G_3', amplitude=1.0, freq=1390.0e9):
 		stddev = fwhm2std(fwhm) #Convert FWHM to stddev
 		pix0 =  models.Gaussian2D(amplitude=amplitude, x_mean=0.0, y_mean=0.0, x_stddev=stddev, y_stddev=stddev) #Define pixel profile
 		self.array_profile = [pix0]
@@ -857,7 +854,7 @@ class FG3_array(GREAT_array):
 
 #Child class to store array profile for 4GREAT 1, FWHM is from the ICD
 class FG4_array(GREAT_array):
-	def __init__(self, fwhm=11.0, type='4G4', amplitude=1.0, freq=2540.0e9):
+	def __init__(self, fwhm=11.0, type='4G_4', amplitude=1.0, freq=2540.0e9):
 		stddev = fwhm2std(fwhm) #Convert FWHM to stddev
 		pix0 =  models.Gaussian2D(amplitude=amplitude, x_mean=0.0, y_mean=0.0, x_stddev=stddev, y_stddev=stddev) #Define pixel profile
 		self.array_profile = [pix0]
