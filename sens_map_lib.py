@@ -14,6 +14,9 @@ from astropy.convolution import Gaussian2DKernel, convolve
 from astropy.coordinates import SkyCoord
 from astropy import units
 from astropy.nddata.blocks import block_reduce
+from astropy.io import fits #Read in FITS files and headers
+from astropy import wcs #For reprojecting fits files=
+from reproject import reproject_interp, reproject_exact #To reproeject WISE band 3 data
 import xmltodict #For reading in AORs
 #import timeit #used for profiling code
 from numba import jit
@@ -307,7 +310,6 @@ class sky:
 		self.y_range = y_range
 		self.nx = nx
 		self.ny = ny
-		self.area = (x_range[1]-x_range[0]) * (y_range[1]-y_range[0]) #Area of sky in square arcsec
 		self.plate_scale = plate_scale
 		self.data = data #This is the actual 2D array that stores the simulated data (in units of T_a)
 		self.noise = noise #This is the 2D array that stores point sources (narroiw gaussians) for the noise (in units of delta-T_a) which are later convolutionally regridded, we are treating noise like we treat signal
@@ -319,6 +321,7 @@ class sky:
 		self.x_1d = self.x[0,:] #Grab 1D arrays for x and y coordinates
 		self.y_1d = self.y[:,0]
 		self.extent = [np.max(x), np.min(x), np.min(y), np.max(y)]  #Gives the x and y coordinate extents for proper plotting using imshow
+		self.area = (np.max(x)-np.min(x)) * (np.max(y)-np.min(y)) #Area of sky in square arcsec
 		#self.total_exptime = 0. #Store total cumulative exposure time which is incremented every time a map is added
 		#self.pixel_area = plate_scale**2 #Area per pixel, used in calculating (exptime/arcsec^2)
 		self.fwhm = 0. #Store latest beam profile FWHM used on this sky object
@@ -333,6 +336,15 @@ class sky:
 		self.exptime_beam = []
 		self.signal_beam = []
 		self.beam_profiles = []
+		self.WCS = wcs.WCS(naxis=2) #Define an astropy WCS object to allow fits files to be projected into this sky object
+		self.WCS.wcs.crval = [0.0, 0.0] #RA and Dec of reference pixel
+		self.WCS.wcs.cdelt = [-plate_scale/3600.0, plate_scale/3600.0] #Define the X and Y scales
+		self.WCS.wcs.ctype = ["RA---TAN", "DEC--TAN"] #Define coordinates projection
+		# ref_pix_x = (self.x_1d[-1] - self.x_1d[0])/(2.0*plate_scale)
+		# ref_pix_y = (self.y_1d[-1] - self.y_1d[0])/(2.0*plate_scale)
+		ref_pix_x = self.x_1d[0] / plate_scale
+		ref_pix_y = - self.y_1d[0] / plate_scale
+		self.WCS.wcs.crpix = [ref_pix_x, ref_pix_y] #Define reference pixel
 		#self.Tsys = Tsys
 		#self.deltaTa = deltaTa
 		#self.Tsky = Tsky #Ambient temperature for the atmosphere
@@ -520,7 +532,32 @@ class sky:
 		# print('total signal =',total_signal)
 		# print('total noise = ', total_noise)
 		return (total_signal / total_noise /np.size(self.data)**0.5) #/ self.area
-
+	def import_wise_band3(self, file_data, primary_aor, background_percentile=2.0, deltafreq=1e6, deltav=0., frequency=0.): #Import a WISE Band 3 (12 micron) image and convert to [CII] flux units
+		#data, header = getdata(filenamem, header=True) #Import the data from the fits file
+		#hdulist = fits.HDUList()
+		#hdulist.fromstring(file_data) #Grab already opened fits file data and put in the hdulist\
+		# if deltav > 0: #If user specifies the size of the spectral element in km/s, use that to calculate deltafreq instead of deltafreq being provided
+		# 	deltafreq = (deltav / 299792.458) * frequency
+		hdulist = fits.HDUList.fromstring(file_data)
+		#hdu = fits.open(filename)
+		data = hdulist[0].data #Set up pointer to data
+		#data = data * (1.8326e-6) #Convert WISE Band 3 DN to Jy (1.8326x10^-6 Jy/DN)  Source: https://wise2.ipac.caltech.edu/docs/release/allwise/expsup/sec4_3a.html#tbl1
+		data = data * 2.9045e-3 * 1.091 #Convert WISE Band 3 DN to Jy  (2.9045e-06 Jy/DN) following the convention used by Anderson et al (2019), Apj, 882, 11   Source:https://wise2.ipac.caltech.edu/docs/release/prelim/expsup/sec2_3f.html, then apply the same color correction they used
+		#data = 14.92 + 0.51*data #Convert WISE Band 3 12 micron data in mJ to [CII] intensity in units of K km s^-1 source: Anderson et al (2019), Apj, 882, 11 https://ui.adsabs.harvard.edu/abs/2019ApJ...882...11A]
+		background = np.nanpercentile(data, background_percentile) #Attempt to subtract the background by finding a lowe end percentile (e.g. 2%), WISE image should be large enough to include background
+		data = 10.0*(data - background) #Trying my own calibration
+		hdulist[0].data = data
+		#deltav = deltafreq * 299792.458 / frequency
+		#data = data / deltav #Convert from units of K km s^-1 to K
+		self.WCS.wcs.crval = [primary_aor.skycoord.ra.deg, primary_aor.skycoord.dec.deg] #set WCS reference pixel coordinates to be the RA and Dec of the primary AOR
+		sky_header = self.WCS.to_header()
+		sky_header['NAXIS'] =  2 #Looks like i need to manually set the NASXIS keywords in the sky header
+		sky_header['NAXIS1'] =  self.nx
+		sky_header['NAXIS2'] =  self.ny
+		array, footprint = reproject_exact(hdulist[0], sky_header, parallel=True) #Reproject WISE Band 3 fits data onto sky
+		# array, footprint = reproject_interp(hdulist[0], sky_header) #Reproject WISE Band 3 fits data onto sky
+		pyplot.imshow(array)
+		self.signal = array
 
 
 
