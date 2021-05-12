@@ -87,8 +87,12 @@ def run_simulate_observation(x1d, y1d, x_array, y_array, signal_array, exptime_a
 			#weights[~np.isfinite(weights)] = np.nan
 			#weights /= np.nansum(weights) #normalize weights
 			exptime_pixel = np.nansum(exptime_array * weights) #Convolve exposure time with kernel to calulate the exposure time for this specific pixel
-			exptime[iy, ix] = exptime_pixel
-			data[iy, ix] = np.nansum(signal_array * weights) / exptime_pixel #Convolve simualted signal on sky with kernel to claculate signal at this pixel
+			if exptime_pixel != 0.: #Error catch
+				exptime[iy, ix] = exptime_pixel
+				data[iy, ix] = np.nansum(signal_array * weights) / exptime_pixel #Convolve simualted signal on sky with kernel to claculate signal at this pixel
+			else:
+				exptime[iy, ix] = 0.
+				data[iy, ix] = 0.
 		#print('Progress:', ix/nx)
 
 	#data /= exptime  #normalize simulated data by exposure time
@@ -408,7 +412,7 @@ class sky:
 	# 	scale_by = (self.total_exptime/self.pixel_area) / np.nansum(self.data)
 	# 	self.data *= scale_by
 	# 	self.noise *= scale_by
-	def simulate_observation(self, Tsys=0., deltafreq=1e6, deltav=0., TPOTF=False, Non=1, freq=0.): #Calculate noise and smooth the data and noisea by convolving with a 2D gausasian kernel with a FHWM that is 1/3 the beam profile, this is the final step for simulating data
+	def simulate_observation(self, Tsys=0., deltafreq=1e6, deltav=0., TPOTF=False, Non=1, freq=0., simulate_noise=False): #Calculate noise and smooth the data and noisea by convolving with a 2D gausasian kernel with a FHWM that is 1/3 the beam profile, this is the final step for simulating data
 		if freq !=0.: #Allow user to manually set frequency
 			self.freq = freq
 
@@ -491,6 +495,12 @@ class sky:
 		#self.noise = (convolved_variance / self.exptime)**0.5
 		#self.noise = noise  / ((self.exptime * self.plate_scale**2)**0.5)
 		self.noise = self.noise_for_one_second  / ((self.exptime)**0.5)
+		mask = self.exptime < 1e-5 #Mask out pixels with near zero exposure
+		self.exptime[mask] = 0.0
+		self.data[mask] = 0.0
+		self.noise[mask] = np.nan
+		if simulate_noise: #If user wants to add simulated noise to the simulated data
+			self.data += np.random.normal(0.0, self.noise, self.data.shape)
 
 		# print('Total S/N: ',self.s2n())
 	def input(self, model_shape): #Draw an astropy model shape onto  sigal (e.g. create a model of the "true" signal)
