@@ -86,9 +86,13 @@ def run_simulate_observation(x1d, y1d, x_array, y_array, signal_array, exptime_a
 			weights = 1.0 * np.exp(-((x_array-x)**2 + (y_array-y)**2) / (2.0 * one_third_stddev**2))#Generate weights for this position using the kernel
 			#weights[~np.isfinite(weights)] = np.nan
 			#weights /= np.nansum(weights) #normalize weights
-			data[iy, ix] = np.nansum(signal_array * weights) #Convolve simualted signal on sky with kernel to claculate signal at this pixel
-			exptime[iy, ix] = np.nansum(exptime_array * weights)#Convolve exposure time with kernel to calulate the exposure time for this specific pixel
+			exptime_pixel = np.nansum(exptime_array * weights) #Convolve exposure time with kernel to calulate the exposure time for this specific pixel
+			exptime[iy, ix] = exptime_pixel
+			data[iy, ix] = np.nansum(signal_array * weights) / exptime_pixel #Convolve simualted signal on sky with kernel to claculate signal at this pixel
 		#print('Progress:', ix/nx)
+
+	#data /= exptime  #normalize simulated data by exposure time
+
 	return data, exptime
 
 
@@ -482,7 +486,7 @@ class sky:
 		# 	print('Progress: ', ix / nx)
 
 		self.data, self.exptime = run_simulate_observation(self.x_1d, self.y_1d, x_array, y_array, signal_array, exptime_array, one_third_stddev, self.data, self.exptime)
-		self.data /= (self.exptime) #normalize simulated data by exposure time
+		#self.data /= (self.exptime) #normalize simulated data by exposure time
 		self.exptime *= self.total_exptime / bn.nansum(self.exptime)
 		#self.noise = (convolved_variance / self.exptime)**0.5
 		#self.noise = noise  / ((self.exptime * self.plate_scale**2)**0.5)
