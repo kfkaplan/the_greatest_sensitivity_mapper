@@ -22,6 +22,8 @@ import xmltodict #For reading in AORs
 from numba import jit
 import ipywidgets
 
+np.seterr(divide='ignore', invalid='ignore') #Hide those pesky divide by zero warnings
+
 
 try:  #Try to import bottleneck library, this greatly speeds up things such as nanmedian, nanmax, and nanmin
 	import bottleneck as bn #Library to speed up some numpy routines
@@ -384,7 +386,8 @@ class sky:
 			label = r'$T_a$'
 			title = r'Signal ($T_a$)'
 		elif map_type == 'noise':
-			min_noise = np.nanmin(self.noise)
+			#min_noise = np.nanmin(self.noise)
+			min_noise = np.nanpercentile(self.noise, 2)
 			pyplot.imshow(self.noise, origin='lower', extent=self.extent, vmax=2.0*min_noise, vmin=0.8*min_noise, **kwargs)
 			#pyplot.imshow(self.noise, origin='lower', extent=self.extent, **kwargs)
 			label = r'$\Delta T_a$'
@@ -398,8 +401,10 @@ class sky:
 			label = r'S/N'
 			title = r'S/N'
 		else: #Normally plot the simulated data
-			min_Ta = 0.9 * bn.nanmin(self.data[np.isfinite(self.data)]) #Fix colorbar scale, especially for a uniform background
-			pyplot.imshow(self.data, origin='lower', extent=self.extent, vmin=min_Ta, **kwargs)
+			#min_Ta = 0.9 * bn.nanmin(self.data[np.isfinite(self.data)]) #Fix colorbar scale, especially for a uniform background
+			min_Ta = np.nanpercentile(self.data, 2)
+			max_Ta = np.nanpercentile(self.data, 98)
+			pyplot.imshow(self.data, origin='lower', extent=self.extent, vmin=min_Ta, vmax=max_Ta, **kwargs)
 			label = r'$T_a$'
 			title = r'$T_a$'
 		if show_points: #If user specifies to show points (usually map or block centers), plot them
@@ -570,7 +575,7 @@ class sky:
 		sky_header['NAXIS2'] =  self.ny
 		array, footprint = reproject_exact(hdulist[0], sky_header, parallel=True) #Reproject WISE Band 3 fits data onto sky
 		# array, footprint = reproject_interp(hdulist[0], sky_header) #Reproject WISE Band 3 fits data onto sky
-		pyplot.imshow(array)
+		#pyplot.imshow(array)
 		self.signal = array
 
 
