@@ -123,7 +123,6 @@ def open_aors(user_input):
 	#who then proceeded to modify it without approval of the Gov'ner or the Crown™.
 	#print('the input type is', type(user_input))
 	if type(user_input) == str: #If user input is a file path
-		print('IT IS RUNNING!')
 		aor_file = open(user_input, 'rb') #Open .aor file
 		xml_dict = xmltodict.parse(aor_file) #Parse the xml from the .aor file into python dictionaries so we can grab information out of them
 		aor_file.close() #close .aor file
