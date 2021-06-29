@@ -122,7 +122,8 @@ def open_aors(user_input):
 	#The following code from Ed Chambers' aor_inpar_translator.py was plundered on the high seas by the nortorious software pirate knwon as Kyle Kaplan
 	#who then proceeded to modify it without approval of the Gov'ner or the Crown™.
 	#print('the input type is', type(user_input))
-	if type(input) == str: #If user input is a file path
+	if type(user_input) == str: #If user input is a file path
+		print('IT IS RUNNING!')
 		aor_file = open(user_input, 'rb') #Open .aor file
 		xml_dict = xmltodict.parse(aor_file) #Parse the xml from the .aor file into python dictionaries so we can grab information out of them
 		aor_file.close() #close .aor file
@@ -456,8 +457,8 @@ class sky:
 
 		# print('S/N per beam', signal_array/noise_array)
 		# print()
-		total_beam_signal = bn.nansum(signal_array/exptime_array)
-		total_beam_noise = bn.nansum((noise_for_one_second*len(signal_array))**2/exptime_array)**0.5
+		#total_beam_signal = bn.nansum(signal_array/exptime_array)
+		#total_beam_noise = bn.nansum((noise_for_one_second*len(signal_array))**2/exptime_array)**0.5
 		# print('Total beam signal:', total_beam_signal)
 		# print('Total beam noise:', total_beam_noise)
 		# print('Total beam S/N:', total_beam_signal/total_beam_noise)
@@ -564,6 +565,9 @@ class sky:
 		data = data * 2.9045e-3 * 1.091 #Convert WISE Band 3 DN to Jy  (2.9045e-06 Jy/DN) following the convention used by Anderson et al (2019), Apj, 882, 11   Source:https://wise2.ipac.caltech.edu/docs/release/prelim/expsup/sec2_3f.html, then apply the same color correction they used
 		#data = 14.92 + 0.51*data #Convert WISE Band 3 12 micron data in mJ to [CII] intensity in units of K km s^-1 source: Anderson et al (2019), Apj, 882, 11 https://ui.adsabs.harvard.edu/abs/2019ApJ...882...11A]
 		background = np.nanpercentile(data, background_percentile) #Attempt to subtract the background by finding a lowe end percentile (e.g. 2%), WISE image should be large enough to include background
+		# data = data - background
+		# data = 4.39138186e+01*data -1.93542638e+00*data**2 +  3.99690075e-02*data**3 #My own calibration comparing the Orion CII and WISE Band 3 data, see jupyter notebook
+
 		data = 10.0*(data - background) #Trying my own calibration
 		hdulist[0].data = data
 		#deltav = deltafreq * 299792.458 / frequency
