@@ -2,7 +2,7 @@ name: the_greatest_sensitivity_mapper
 channels:
   - defaults
   - conda-forge
-dependencies
+dependencies:
   - python=3.8
   - copy
   - ipython
@@ -13,5 +13,5 @@ dependencies
   - numba
   - xmltodict
   - ipywidgets
-  - pip
+  - pip:
       -reproject
