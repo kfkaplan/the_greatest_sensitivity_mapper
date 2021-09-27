@@ -382,7 +382,9 @@ class sky:
 			label = r'Time (s)'
 			title = r'Exposure Time (s)'
 		elif map_type == 'signal': # if signal is set to true, plot the modeled signal instead
-			pyplot.imshow(self.signal, origin='lower', extent=self.extent, **kwargs)
+			min_Ta = np.nanpercentile(self.signal, 2)
+			max_Ta = np.nanpercentile(self.signal, 99.5)
+			pyplot.imshow(self.signal, origin='lower', extent=self.extent, vmin=min_Ta, vmax=max_Ta, **kwargs)
 			label = r'$T_a$'
 			title = r'Signal ($T_a$)'
 		elif map_type == 'noise':
@@ -552,25 +554,15 @@ class sky:
 		# print('total noise = ', total_noise)
 		return (total_signal / total_noise /np.size(self.data)**0.5) #/ self.area
 	def import_wise_band3(self, file_data, primary_aor, background_percentile=2.0, deltafreq=1e6, deltav=0., frequency=0.): #Import a WISE Band 3 (12 micron) image and convert to [CII] flux units
-		#data, header = getdata(filenamem, header=True) #Import the data from the fits file
-		#hdulist = fits.HDUList()
-		#hdulist.fromstring(file_data) #Grab already opened fits file data and put in the hdulist\
-		# if deltav > 0: #If user specifies the size of the spectral element in km/s, use that to calculate deltafreq instead of deltafreq being provided
-		# 	deltafreq = (deltav / 299792.458) * frequency
-		hdulist = fits.HDUList.fromstring(file_data)
-		#hdu = fits.open(filename)
+		hdulist = fits.HDUList.fromstring(file_data) #Load fits file
 		data = hdulist[0].data #Set up pointer to data
 		#data = data * (1.8326e-6) #Convert WISE Band 3 DN to Jy (1.8326x10^-6 Jy/DN)  Source: https://wise2.ipac.caltech.edu/docs/release/allwise/expsup/sec4_3a.html#tbl1
-		data = data * 2.9045e-3 * 1.091 #Convert WISE Band 3 DN to Jy  (2.9045e-06 Jy/DN) following the convention used by Anderson et al (2019), Apj, 882, 11   Source:https://wise2.ipac.caltech.edu/docs/release/prelim/expsup/sec2_3f.html, then apply the same color correction they used
+		data = data* 2.9045e-3 * 1.091 #Convert WISE Band 3 DN to Jy  (2.9045e-06 Jy/DN) following the convention used by Anderson et al (2019), Apj, 882, 11   Source:https://wise2.ipac.caltech.edu/docs/release/prelim/expsup/sec2_3f.html, then apply the same color correction they used
 		#data = 14.92 + 0.51*data #Convert WISE Band 3 12 micron data in mJ to [CII] intensity in units of K km s^-1 source: Anderson et al (2019), Apj, 882, 11 https://ui.adsabs.harvard.edu/abs/2019ApJ...882...11A]
 		background = np.nanpercentile(data, background_percentile) #Attempt to subtract the background by finding a lowe end percentile (e.g. 2%), WISE image should be large enough to include background
-		# data = data - background
 		# data = 4.39138186e+01*data -1.93542638e+00*data**2 +  3.99690075e-02*data**3 #My own calibration comparing the Orion CII and WISE Band 3 data, see jupyter notebook
-
 		data = 10.0*(data - background) #Trying my own calibration
 		hdulist[0].data = data
-		#deltav = deltafreq * 299792.458 / frequency
-		#data = data / deltav #Convert from units of K km s^-1 to K
 		self.WCS.wcs.crval = [primary_aor.skycoord.ra.deg, primary_aor.skycoord.dec.deg] #set WCS reference pixel coordinates to be the RA and Dec of the primary AOR
 		sky_header = self.WCS.to_header()
 		sky_header['NAXIS'] =  2 #Looks like i need to manually set the NASXIS keywords in the sky header
@@ -580,8 +572,25 @@ class sky:
 		# array, footprint = reproject_interp(hdulist[0], sky_header) #Reproject WISE Band 3 fits data onto sky
 		#pyplot.imshow(array)
 		self.signal = array
-
-
+		hdulist.close() #Close the HDU List
+	def import_wise_band1(self, file_data, primary_aor, background_percentile=2.0, deltafreq=1e6, deltav=0., frequency=0.): #Import a WISE Band 1 (3.4 micron) image and use it to remove the stellar continuum from an already imported WISE Band 3 image, put through the exact same conversion process but subtract at the end (see citation at the end)
+		hdulist = fits.HDUList.fromstring(file_data) #Load fits file
+		data = hdulist[0].data #Set up pointer to data
+		#data = data * (1.8326e-6) #Convert WISE Band 3 DN to Jy (1.8326x10^-6 Jy/DN)  Source: https://wise2.ipac.caltech.edu/docs/release/allwise/expsup/sec4_3a.html#tbl1
+		data = data * 2.9045e-3 * 1.091 #Convert WISE Band 3 DN to Jy  (2.9045e-06 Jy/DN) following the convention used by Anderson et al (2019), Apj, 882, 11   Source:https://wise2.ipac.caltech.edu/docs/release/prelim/expsup/sec2_3f.html, then apply the same color correction they used
+		#data = 14.92 + 0.51*data #Convert WISE Band 3 12 micron data in mJ to [CII] intensity in units of K km s^-1 source: Anderson et al (2019), Apj, 882, 11 https://ui.adsabs.harvard.edu/abs/2019ApJ...882...11A]
+		background = np.nanpercentile(data, background_percentile) #Attempt to subtract the background by finding a lowe end percentile (e.g. 2%), WISE image should be large enough to include background
+		# data = 4.39138186e+01*data -1.93542638e+00*data**2 +  3.99690075e-02*data**3 #My own calibration comparing the Orion CII and WISE Band 3 data, see jupyter notebook
+		data = 10.0*(data - background) #Trying my own calibration (same calib as WISE Band 3)
+		hdulist[0].data = data
+		self.WCS.wcs.crval = [primary_aor.skycoord.ra.deg, primary_aor.skycoord.dec.deg] #set WCS reference pixel coordinates to be the RA and Dec of the primary AOR
+		sky_header = self.WCS.to_header()
+		sky_header['NAXIS'] =  2 #Looks like i need to manually set the NASXIS keywords in the sky header
+		sky_header['NAXIS1'] =  self.nx
+		sky_header['NAXIS2'] =  self.ny
+		array, footprint = reproject_exact(hdulist[0], sky_header, parallel=True) #Reproject WISE Band 1 fits data onto sky
+		self.signal -= 0.158 * array #See stellar contribution removal method in Section 6.1.2 of Asabere et al. (2016) https://arxiv.org/pdf/1605.07565.pdf
+		hdulist.close() #Close the HDU List
 
 
 #Parent class for storing the array profile for the LFA, HFA, and 4GREAT
