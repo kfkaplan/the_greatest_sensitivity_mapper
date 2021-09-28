@@ -1,5 +1,6 @@
 name: the_greatest_sensitivity_mapper
 channels:
+  - astropy
   - defaults
   - conda-forge
 dependencies:
@@ -11,6 +12,4 @@ dependencies:
   - astropy=4.1
   - numba
   - ipywidgets
-  - pip
-  - pip:
-      -reproject
+  - reproject
