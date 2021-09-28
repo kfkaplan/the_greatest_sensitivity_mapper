@@ -4,14 +4,12 @@ channels:
   - conda-forge
 dependencies:
   - python=3.8
-  - copy
   - ipython
   - numpy
   - scipy
   - matplotlib
   - astropy=4.1
   - numba
-  - xmltodict
   - ipywidgets
   - pip
   - pip:
