@@ -9,7 +9,7 @@ dependencies:
   - numpy
   - scipy
   - matplotlib
-  - astropy=4.1]
+  - astropy=4.1
   - numba
   - xmltodict
   - ipywidgets
