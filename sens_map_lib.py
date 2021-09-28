@@ -539,6 +539,11 @@ class sky:
 		#self.signal = self.signal * (total_signal_unreduced / total_signal_reduced)
 		self.exptime = block_reduce(self.exptime, factor)  #Resample exposure time (here we just sum, no normalization)
 		self.noise = self.noise_for_one_second / self.exptime**0.5 #Recalculate noise using the new exposure time grid
+		#Update WCS after downsampling
+		self.WCS.cdelt =  [-plate_scale/3600.0, plate_scale/3600.0] #Define the X and Y scales
+		ref_pix_x = self.x_1d[0] / plate_scale
+		ref_pix_y = - self.y_1d[0] / plate_scale
+		self.WCS.wcs.crpix = [ref_pix_x, ref_pix_y] #Define reference pixel
 		# print('Total S/N: ',self.s2n())
 	def gaussian_smooth(self, fwhm): #Gaussian smooth to a stated FWHM, useful for visualizing binned data without downsizing or smoothing out artifacts, can be done before downsampling
 		standard_deviation = fwhm2std(fwhm)
@@ -591,7 +596,7 @@ class sky:
 		array, footprint = reproject_exact(hdulist[0], sky_header, parallel=True) #Reproject WISE Band 1 fits data onto sky
 		self.signal -= 0.158 * array #See stellar contribution removal method in Section 6.1.2 of Asabere et al. (2016) https://arxiv.org/pdf/1605.07565.pdf
 		hdulist.close() #Close the HDU List
-	def savefits(self, filename, kind='exposure')
+	def savefits(self, filename, kind='exposure'):
 		sky_header = self.WCS.to_header() #Get header
 		#Get data dpeneding on what user inputs
 		if kind == 'exposure': #exp time in seconds per spatial resolution element
