@@ -313,9 +313,9 @@ class sky:
 		data = np.zeros([ny, nx])
 		sigma = np.zeros([ny, nx])
 		exptime = np.zeros([ny, nx])
-		y, x = np.mgrid[0:ny,0:nx] * plate_scale
-		x += x_range[0]
-		y += y_range[0]
+		y, x = np.mgrid[0:ny,0:nx]*plate_scale
+		x += x_range[0] #+ 0.5*plate_scale
+		y += y_range[0] #- 0.5*plate_scale
 		self.x_range = x_range #Save x,y ranges and plate scale
 		self.y_range = y_range
 		self.nx = nx
@@ -519,8 +519,8 @@ class sky:
 		nx = int((self.x_range[1]-self.x_range[0])/plate_scale)
 		ny = int((self.y_range[1]-self.y_range[0])/plate_scale)
 		y, x = np.mgrid[0:ny,0:nx] * plate_scale
-		x += self.x_range[0]
-		y += self.y_range[0]
+		x += self.x_range[0]# - 0.5*plate_scale
+		y += self.y_range[0]# + 0.5*plate_scale
 		self.plate_scale = plate_scale #Save the new plate scale and x,y coordinate 2D and 1D grids
 		self.x = x[:,::-1] #2D x coords (note the x coordinates inncrese to the left since they are RA)
 		self.y = y #2D y coords
@@ -531,7 +531,7 @@ class sky:
 		self.data = block_reduce(self.data, factor)  / float(factor**2)
 		#total_data_reduced = bn.nansum(self.data)
 		#print('Block reduce ratio = ', total_data_unreduced / total_data_reduced)
-		#self.data = self.data * (total_data_unreduced / total_data_reduced)
+		#self.data = self.data * (total_data_unreduced / total_data_reduced) 
 		#Resample signal (treat like the data)
 		#total_signal_unreduced = bn.nansum(self.signal) #Resample data normalized to the total value (ie. T_a won't change)
 		self.signal = block_reduce(self.signal, factor)  / float(factor**2)
@@ -591,6 +591,23 @@ class sky:
 		array, footprint = reproject_exact(hdulist[0], sky_header, parallel=True) #Reproject WISE Band 1 fits data onto sky
 		self.signal -= 0.158 * array #See stellar contribution removal method in Section 6.1.2 of Asabere et al. (2016) https://arxiv.org/pdf/1605.07565.pdf
 		hdulist.close() #Close the HDU List
+	def savefits(self, filename, kind='exposure')
+		sky_header = self.WCS.to_header() #Get header
+		#Get data dpeneding on what user inputs
+		if kind == 'exposure': #exp time in seconds per spatial resolution element
+			output = self.exptime
+		elif kind == 'signal': #artificial signal used to simulate data
+			output = self.signal
+		elif kind == 'noise': #Noise
+			output = self.noise
+		elif kind == 's2n': #signal-to-noise of simulated data
+			output = self.data/self.noise
+		elif kind == 'data': #simulated data
+			output = self.data
+		else: #catch error
+			print("WARNING: Argument kind="+str(type(user_input)) + "is not valid.  Set kind equal to 'exposure', 'signal', 'noise', 's2n', or 'data'.")
+		fits.writeto(filename, output, header=sky_header) #Output fits file
+
 
 
 #Parent class for storing the array profile for the LFA, HFA, and 4GREAT
