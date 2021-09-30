@@ -545,9 +545,9 @@ class sky:
 		img_hdu.data = self.signal #Reproject artificial signal
 		array, footprint = reproject_exact(img_hdu, new_header, parallel=True) 
 		self.signal = array
-		img_hdu.data = self.signal #Reproject simulated signal
+		img_hdu.data = self.data #Reproject simulated signal
 		array, footprint = reproject_exact(img_hdu, new_header, parallel=True) 
-		self.signal = array
+		self.data = array
 		img_hdu.data = self.exptime #Reproject exposure time
 		array, footprint = reproject_exact(img_hdu, new_header, parallel=True) 
 		self.exptime = array * factor**2
