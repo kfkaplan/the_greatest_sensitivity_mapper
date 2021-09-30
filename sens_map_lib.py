@@ -6,7 +6,7 @@
 #Import python libraries 
 import numpy as np
 import copy
-from scipy.interpolate import interp1d
+#from scipy.interpolate import interp1d
 from matplotlib import pyplot
 #from astropy.io import fits
 from astropy.modeling import models
@@ -16,7 +16,7 @@ from astropy import units
 from astropy.nddata.blocks import block_reduce
 from astropy.io import fits #Read in FITS files and headers
 from astropy import wcs #For reprojecting fits files=
-from reproject import reproject_interp, reproject_exact #To reproeject WISE band 3 data
+from reproject import reproject_exact#, reproject_interp #To reproeject WISE band 3 data
 import xmltodict #For reading in AORs
 #import timeit #used for profiling code
 from numba import jit
@@ -65,7 +65,6 @@ honeycomb_pattern = np.array([
 	[-2.00000, -1.73205], #25
 	])
 
-
 def fwhm2std(fwhm): #Convert FWHM to stddev (for a gaussian)
 	return   fwhm / (2.0 * np.sqrt(2.0 * np.log(2.0)))
 
@@ -85,7 +84,8 @@ def run_simulate_observation(x1d, y1d, x_array, y_array, signal_array, exptime_a
 	for ix, x in enumerate(x1d): #Loop through each pixel in the sky object and use a kernel with 1/3 the FWHM of the beam size to 
 		for iy, y in enumerate(y1d):
 			#weights = gauss2d_simulate_obs(amplitude=1.0, xpos=x_array, ypos=y_array, x=x, y=y, stddev=one_third_stddev) #Generate weights for this position using the kernel
-			weights = 1.0 * np.exp(-((x_array-x)**2 + (y_array-y)**2) / (2.0 * one_third_stddev**2))#Generate weights for this position using the kernel
+			#weights = 1.0 * np.exp(-((x_array-x)**2 + (y_array-y)**2) / (2.0 * one_third_stddev**2))#Generate weights for this position using the kernel
+			weights = np.exp(-((x_array-x)**2 + (y_array-y)**2) / (2.0 * one_third_stddev**2))#Generate weights for this position using the kernel
 			#weights[~np.isfinite(weights)] = np.nan
 			#weights /= np.nansum(weights) #normalize weights
 			exptime_pixel = np.nansum(exptime_array * weights) #Convolve exposure time with kernel to calulate the exposure time for this specific pixel
@@ -306,16 +306,16 @@ class sky:
 			x_range = [0.0, x_range]
 		if np.size(y_range) == 1:
 			y_range = [0.0, y_range]
-		nx = int((x_range[1]-x_range[0])/plate_scale)
-		ny = int((y_range[1]-y_range[0])/plate_scale)
+		nx = int((x_range[1]-x_range[0])/plate_scale) + 1
+		ny = int((y_range[1]-y_range[0])/plate_scale) + 1
 		signal = np.zeros([ny, nx])
 		noise = np.zeros([ny, nx])
 		data = np.zeros([ny, nx])
 		sigma = np.zeros([ny, nx])
 		exptime = np.zeros([ny, nx])
 		y, x = np.mgrid[0:ny,0:nx]*plate_scale
-		x += x_range[0] #+ 0.5*plate_scale
-		y += y_range[0] #- 0.5*plate_scale
+		x += x_range[0]
+		y += y_range[0]
 		self.x_range = x_range #Save x,y ranges and plate scale
 		self.y_range = y_range
 		self.nx = nx
@@ -347,13 +347,20 @@ class sky:
 		self.signal_beam = []
 		self.beam_profiles = []
 		self.WCS = wcs.WCS(naxis=2) #Define an astropy WCS object to allow fits files to be projected into this sky object
-		self.WCS.wcs.crval = [0.0, 0.0] #RA and Dec of reference pixel
 		self.WCS.wcs.cdelt = [-plate_scale/3600.0, plate_scale/3600.0] #Define the X and Y scales
 		self.WCS.wcs.ctype = ["RA---TAN", "DEC--TAN"] #Define coordinates projection
-		# ref_pix_x = (self.x_1d[-1] - self.x_1d[0])/(2.0*plate_scale)
-		# ref_pix_y = (self.y_1d[-1] - self.y_1d[0])/(2.0*plate_scale)
-		ref_pix_x = self.x_1d[0] / plate_scale
-		ref_pix_y = - self.y_1d[0] / plate_scale
+		# ref_pix_x = 0
+		# ref_pix_y = 0
+		ref_pix_x = (self.x_1d[0] - self.x_1d[-1])/(2.0*plate_scale)+1
+		ref_pix_y = (self.y_1d[-1] - self.y_1d[0])/(2.0*plate_scale)+1
+		ref_pix_ra =  (self.x_1d[0] + self.x_1d[-1]) / (2.0 * 3600.0)
+		ref_pix_dec = (self.y_1d[0] + self.y_1d[-1]) / (2.0 * 3600.0)
+		# ref_pix_x = np.where(self.x_1d == 0.0)[0][0]
+		# ref_pix_y = np.where(self.y_1d == 0.0)[0][0]
+		# ref_pix_x = self.x_1d[0] / plate_scale
+		# ref_pix_y = - self.y_1d[0] / plate_scale
+		#self.WCS.wcs.crval = [-ref_pix_x*plate_scale/3600.0, ref_pix_y*plate_scale/3600.0] #RA and Dec of reference pixel
+		self.WCS.wcs.crval = [ref_pix_ra, ref_pix_dec]
 		self.WCS.wcs.crpix = [ref_pix_x, ref_pix_y] #Define reference pixel
 		#self.Tsys = Tsys
 		#self.deltaTa = deltaTa
@@ -424,8 +431,8 @@ class sky:
 			self.freq = freq
 
 		one_third_stddev = fwhm2std(self.fwhm) / 3.0 #Set up convolving kerneal for cygrid to be a 2D guassian with 1/3 the FWHM of the beam profiles
-		x_array = np.array(self.x_beam) 
-		y_array = np.array(self.y_beam)
+		x_array = np.array(self.x_beam) #- self.plate_scale
+		y_array = np.array(self.y_beam) #- self.plate_scale
 		signal_array = np.array(self.signal_beam)
 		exptime_array = np.array(self.exptime_beam)
 		convolved_variance = np.zeros(np.shape(self.data))
@@ -496,7 +503,9 @@ class sky:
 		# 		#convolved_variance[iy, ix] = bn.nansum(noise_array**2 * exptime_array * weights)
 		# 	print('Progress: ', ix / nx)
 
+		#self.data, self.exptime = run_simulate_observation(self.x_1d - 0.5*self.plate_scale, self.y_1d - 0.5*self.plate_scale, x_array, y_array, signal_array, exptime_array, one_third_stddev, self.data, self.exptime)
 		self.data, self.exptime = run_simulate_observation(self.x_1d, self.y_1d, x_array, y_array, signal_array, exptime_array, one_third_stddev, self.data, self.exptime)
+
 		#self.data /= (self.exptime) #normalize simulated data by exposure time
 		self.exptime *= self.total_exptime / bn.nansum(self.exptime)
 		#self.noise = (convolved_variance / self.exptime)**0.5
@@ -514,37 +523,70 @@ class sky:
 		self.signal += model_shape(self.x, self.y)
 	def uniform(self, T): #Make sky grid have a uniform signal (mainly used for testing)
 		self.signal[:] = T
-	def downsample(self, factor): #Downsample sky grid by an integer factor (1/2, 1/3, 1/4, ect.) using the astropy function 
+	def downsample(self, factor): #Downsample sky grid by an integer factor (1/2, 1/3, 1/4, ect.) using the astropy function
 		plate_scale = self.plate_scale * factor #calculate new plate scale
-		nx = int((self.x_range[1]-self.x_range[0])/plate_scale)
-		ny = int((self.y_range[1]-self.y_range[0])/plate_scale)
-		y, x = np.mgrid[0:ny,0:nx] * plate_scale
-		x += self.x_range[0]# - 0.5*plate_scale
-		y += self.y_range[0]# + 0.5*plate_scale
-		self.plate_scale = plate_scale #Save the new plate scale and x,y coordinate 2D and 1D grids
-		self.x = x[:,::-1] #2D x coords (note the x coordinates inncrese to the left since they are RA)
-		self.y = y #2D y coords
-		self.x_1d = self.x[0,:] #Grab 1D arrays for x and y coordinates
-		self.y_1d = self.y[:,0]
-		#Resample all grids using astropy block_reduce
-		#total_data_unreduced = bn.nansum(self.data) #Resample data normalized to the total value (ie. T_a won't change)
-		self.data = block_reduce(self.data, factor)  / float(factor**2)
-		#total_data_reduced = bn.nansum(self.data)
-		#print('Block reduce ratio = ', total_data_unreduced / total_data_reduced)
-		#self.data = self.data * (total_data_unreduced / total_data_reduced) 
-		#Resample signal (treat like the data)
-		#total_signal_unreduced = bn.nansum(self.signal) #Resample data normalized to the total value (ie. T_a won't change)
-		self.signal = block_reduce(self.signal, factor)  / float(factor**2)
-		#total_signal_reduced = bn.nansum(self.signal)
-		#self.signal = self.signal * (total_signal_unreduced / total_signal_reduced)
-		self.exptime = block_reduce(self.exptime, factor)  #Resample exposure time (here we just sum, no normalization)
+		new_WCS = copy.deepcopy(self.WCS) #Need to set up a new WCS
+		new_WCS.wcs.cdelt[0] = self.WCS.wcs.cdelt[0] * factor
+		new_WCS.wcs.cdelt[1] = self.WCS.wcs.cdelt[1] * factor
+		#ref_pix_x = self.x_1d[0] / plate_scale
+		#ref_pix_y = - self.y_1d[0] / plate_scale
+		ref_pix_x = self.WCS.wcs.crpix[0] / factor
+		ref_pix_y = self.WCS.wcs.crpix[1] / factor
+		new_WCS.wcs.crpix = [ref_pix_x, ref_pix_y] #Define reference pixel
+		new_header = new_WCS.to_header()
+		new_header['NAXIS'] =  2 #Looks like i need to manually set the NASXIS keywords in the sky header
+		nx = abs(int((self.x_range[1]-self.x_range[0])/plate_scale))
+		ny = abs(int((self.y_range[1]-self.y_range[0])/plate_scale))
+		# nx = int((self.x_range[1]-self.x_range[0])/plate_scale)
+		# ny = int((self.y_range[1]-self.y_range[0])/plate_scale)
+		new_header['NAXIS1'] =  nx
+		new_header['NAXIS2'] =  ny
+		img_hdu = fits.ImageHDU(header=self.WCS.to_header()) #Encapsulate everything an ImageHDU object for running repropject
+		img_hdu.data = self.signal #Reproject artificial signal
+		array, footprint = reproject_exact(img_hdu, new_header, parallel=True) 
+		self.signal = array
+		img_hdu.data = self.signal #Reproject simulated signal
+		array, footprint = reproject_exact(img_hdu, new_header, parallel=True) 
+		self.signal = array
+		img_hdu.data = self.exptime #Reproject exposure time
+		array, footprint = reproject_exact(img_hdu, new_header, parallel=True) 
+		self.exptime = array * factor**2
 		self.noise = self.noise_for_one_second / self.exptime**0.5 #Recalculate noise using the new exposure time grid
-		#Update WCS after downsampling
-		self.WCS.cdelt =  [-plate_scale/3600.0, plate_scale/3600.0] #Define the X and Y scales
-		ref_pix_x = self.x_1d[0] / plate_scale
-		ref_pix_y = - self.y_1d[0] / plate_scale
-		self.WCS.wcs.crpix = [ref_pix_x, ref_pix_y] #Define reference pixel
-		# print('Total S/N: ',self.s2n())
+		self.WCS = new_WCS #Save updated wcs
+
+		# plate_scale = self.plate_scale * factor #calculate new plate scale
+		# nx = int((self.x_range[1]-self.x_range[0])/plate_scale)
+		# ny = int((self.y_range[1]-self.y_range[0])/plate_scale)
+		# y, x = np.mgrid[0:ny,0:nx] * plate_scale
+		# x += self.x_range[0]# - 0.5*plate_scale
+		# y += self.y_range[0]# + 0.5*plate_scale
+		# self.plate_scale = plate_scale #Save the new plate scale and x,y coordinate 2D and 1D grids
+		# self.x = x[:,::-1] #2D x coords (note the x coordinates inncrese to the left since they are RA)
+		# self.y = y #2D y coords
+		# self.x_1d = self.x[0,:] #Grab 1D arrays for x and y coordinates
+		# self.y_1d = self.y[:,0]
+		# #Resample all grids using astropy block_reduce
+		# #total_data_unreduced = bn.nansum(self.data) #Resample data normalized to the total value (ie. T_a won't change)
+		# self.data = block_reduce(self.data, factor)  / float(factor**2)
+		# #total_data_reduced = bn.nansum(self.data)
+		# #print('Block reduce ratio = ', total_data_unreduced / total_data_reduced)
+		# #self.data = self.data * (total_data_unreduced / total_data_reduced) 
+		# #Resample signal (treat like the data)
+		# #total_signal_unreduced = bn.nansum(self.signal) #Resample data normalized to the total value (ie. T_a won't change)
+		# self.signal = block_reduce(self.signal, factor)  / float(factor**2)
+		# #total_signal_reduced = bn.nansum(self.signal)
+		# #self.signal = self.signal * (total_signal_unreduced / total_signal_reduced)
+		# self.exptime = block_reduce(self.exptime, factor)  #Resample exposure time (here we just sum, no normalization)
+		# self.noise = self.noise_for_one_second / self.exptime**0.5 #Recalculate noise using the new exposure time grid
+		# #Update WCS after downsampling
+		# #self.WCS.cdelt =  [-plate_scale/3600.0, plate_scale/3600.0] #Define the X and Y scales
+		# self.WCS.wcs.cdelt[0] = self.WCS.wcs.cdelt[0] * factor
+		# self.WCS.wcs.cdelt[1] = self.WCS.wcs.cdelt[1] * factor
+		# ref_pix_x = self.x_1d[0] / plate_scale
+		# ref_pix_y = - self.y_1d[0] / plate_scale
+		# self.WCS.wcs.crpix = [ref_pix_x, ref_pix_y] #Define reference pixel
+		# # print('Total S/N: ',self.s2n())
+
 	def gaussian_smooth(self, fwhm): #Gaussian smooth to a stated FWHM, useful for visualizing binned data without downsizing or smoothing out artifacts, can be done before downsampling
 		standard_deviation = fwhm2std(fwhm)
 		kernel = Gaussian2DKernel(x_stddev=standard_deviation, y_stddev=standard_deviation)
@@ -611,7 +653,7 @@ class sky:
 			output = self.data
 		else: #catch error
 			print("WARNING: Argument kind="+str(type(user_input)) + "is not valid.  Set kind equal to 'exposure', 'signal', 'noise', 's2n', or 'data'.")
-		fits.writeto(filename, output, header=sky_header) #Output fits file
+		fits.writeto(filename, output, header=sky_header, overwrite=True) #Output fits file
 
 
 
