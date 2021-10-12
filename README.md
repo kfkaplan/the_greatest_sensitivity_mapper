@@ -17,8 +17,7 @@ conda env create -f environment.yml
 
 Go to the git repo directory
 
-Everytime before running the GREAT Exposure Mapper Program, you will need to run
+If you created a conda enviroment from environment.yml (see above), run the following in your termianl to activate the environment:
 ```
 conda activate the_great_sensitivty_mapper
 ```
-to activate the conda enviroment.
