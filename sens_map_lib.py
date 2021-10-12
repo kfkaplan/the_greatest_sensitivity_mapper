@@ -428,7 +428,7 @@ class sky:
 	# 	scale_by = (self.total_exptime/self.pixel_area) / np.nansum(self.data)
 	# 	self.data *= scale_by
 	# 	self.noise *= scale_by
-	def simulate_observation(self, Tsys=0., deltafreq=1e6, deltav=0., TPOTF=False, Non=1, freq=0., simulate_noise=False): #Calculate noise and smooth the data and noisea by convolving with a 2D gausasian kernel with a FHWM that is 1/3 the beam profile, this is the final step for simulating data
+	def simulate_observation(self, Tsys=0., deltafreq=1e6, deltav=0., TPOTF=False, Non=1, freq=0., simulate_noise=False, use_both_LFA_polarizations=False): #Calculate noise and smooth the data and noisea by convolving with a 2D gausasian kernel with a FHWM that is 1/3 the beam profile, this is the final step for simulating data
 		if freq !=0.: #Allow user to manually set frequency
 			self.freq = freq
 
@@ -459,8 +459,8 @@ class sky:
 		else: #If a Total Power Array OTF map....
 			noise_for_one_second = Tsys * (1.0 + self.Non**-0.5)**0.5 / (self.deltafreq)**0.5 #Calculate RMS temp. (noise) for TP OTF maps
 		self.noise_for_one_second = noise_for_one_second #tore the noise for one second in case it is needed for later recalculations
-		self.noise_beam = noise_for_one_second / exptime_array
-		self.s2n_beam = signal_array / self.noise_beam
+		#self.noise_beam = noise_for_one_second / exptime_array
+		#self.s2n_beam = signal_array / self.noise_beam
 		#noise_array = noise_array * exptime_array
 		# noise_array = noise #/ (exptime_array**0.5)
 		# print('Noise per beam', noise_array)
@@ -517,6 +517,12 @@ class sky:
 		self.exptime[mask] = 0.0
 		self.data[mask] = 0.0
 		self.noise[mask] = np.nan
+
+		if use_both_LFA_polarizations: #If user specifies they want to use both the LFAH and LFAV polarizations, double the exposure time
+			self.exptime *= 2.0
+			self.noise /= np.sqrt(2.0)
+
+
 		if simulate_noise: #If user wants to add simulated noise to the simulated data
 			self.data += np.random.normal(0.0, self.noise, self.data.shape)
 
