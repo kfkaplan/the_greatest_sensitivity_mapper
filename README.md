@@ -4,6 +4,17 @@ This program is for mapping exposure time, sensitivity (noise), simulated data, 
 
 Questions, comments, found a bug?  Email me at: kkaplan@usra.edu
 
+## Using the GUI
+
+The GUI notebook will open in a web-browser.  Activate the cell with the code by clicking it and pressing SHIFT+RETURN.  When it has finished running after a few seconds, scroll down and you should see the GUI.  Follow the instructions written on it.
+
+## To run online using mybinder.org
+
+The program can be conveniently run online using the service http://mybinder.org.    Note that if you find mybinder.org too slow, we recommend you install and run the GREAT Exposure Mapper Program on your own machine.
+
+To run online, click the following link (when first run, it can take several minutes for the environment to build so please be patient):
+https://mybinder.org/v2/gh/kfkaplan/the_greatest_sensitivity_mapper/ceb43748a0e37b8d985202fddbadc93b9661f057?urlpath=lab%2Ftree%2FGUI.ipynb
+
 ## To install on your own machine
 
 Clone or download the master branch of the git repo to your machine.
@@ -29,14 +40,5 @@ Run the jupyter notebook GUI:
 jupyter notebook GUI.ipynb
 ```
 
-## To run online using mybinder.org
-
-The program can be conveniently run online using the service http://mybinder.org.    Note that if you find mybinder.org too slow, we recommend you install and run the GREAT Exposure Mapper Program on your own machine.
-
-To run online, click the following link (when first run, it can take several minutes for the environment to build so please be patient):
-https://mybinder.org/v2/gh/kfkaplan/the_greatest_sensitivity_mapper/ceb43748a0e37b8d985202fddbadc93b9661f057?urlpath=lab%2Ftree%2FGUI.ipynb
 
 
-## Using the GUI
-
-The GUI notebook will open in a web-browser.  Activate the cell with the code by clicking it and pressing SHIFT+RETURN.  When it has finished running after a few seconds, scroll down and you should see the GUI.  Follow the instructions written on it.
