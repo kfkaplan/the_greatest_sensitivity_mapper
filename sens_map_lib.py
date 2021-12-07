@@ -428,7 +428,7 @@ class sky:
 	# 	scale_by = (self.total_exptime/self.pixel_area) / np.nansum(self.data)
 	# 	self.data *= scale_by
 	# 	self.noise *= scale_by
-	def simulate_observation(self, Tsys=0., deltafreq=1e6, deltav=0., TPOTF=False, Non=1, freq=0., simulate_noise=False, use_both_LFA_polarizations=False): #Calculate noise and smooth the data and noisea by convolving with a 2D gausasian kernel with a FHWM that is 1/3 the beam profile, this is the final step for simulating data
+	def simulate_observation(self, Tsys=0., deltafreq=1e6, deltav=0., TPOTF=False, Non=1, freq=0., simulate_noise=False, use_both_LFA_polarizations=False, fraction_completion=1.0): #Calculate noise and smooth the data and noisea by convolving with a 2D gausasian kernel with a FHWM that is 1/3 the beam profile, this is the final step for simulating data
 		if freq !=0.: #Allow user to manually set frequency
 			self.freq = freq
 
@@ -509,7 +509,7 @@ class sky:
 		self.data, self.exptime = run_simulate_observation(self.x_1d, self.y_1d, x_array, y_array, signal_array, exptime_array, one_third_stddev, self.data, self.exptime)
 
 		#self.data /= (self.exptime) #normalize simulated data by exposure time
-		self.exptime *= self.total_exptime / bn.nansum(self.exptime)
+		self.exptime *=  fraction_completion * self.total_exptime / bn.nansum(self.exptime)
 		#self.noise = (convolved_variance / self.exptime)**0.5
 		#self.noise = noise  / ((self.exptime * self.plate_scale**2)**0.5)
 		self.noise = self.noise_for_one_second  / ((self.exptime)**0.5)
