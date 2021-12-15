@@ -184,10 +184,16 @@ class aor:
 			self.primary_frequency = 'LFAV'
 		frequencies = [] #Grab  frequencies 1,2,3,4,5
 		frequencies.append(float(instr_data['Frequency']) * 1e9) #HFA
-		frequencies.append(float(instr_data['Frequency2']) * 1e9) #4G4
-		frequencies.append(float(instr_data['Frequency3']) * 1e9) #4G3
-		frequencies.append(float(instr_data['Frequency4']) * 1e9) #4G2 or LFAH
-		frequencies.append(float(instr_data['Frequency5']) * 1e9) #4G1 or LFAV
+		frequencies.append(float(instr_data['Frequency2']) * 1e9) #4G1 or LFAH
+		frequencies.append(float(instr_data['Frequency3']) * 1e9) #4G2 or LFAV
+		if "Frequency4" in instr_data: #Check if using 4GREAT
+			frequencies.append(float(instr_data['Frequency4']) * 1e9) #4G3
+		else: #If not, just put zero as a placeholder
+			frequencies.append(0.0)
+		if "Frequency5" in instr_data: #Check if using 4GREAT
+			frequencies.append(float(instr_data['Frequency5']) * 1e9) #4G4 
+		else: #If not, just put zero as a placeholder
+			frequencies.append(0.0)
 		self.frequencies = frequencies #
 		self.aor_id = instr_data['aorID'] #Carry the aor ID through so it is easier to identify what is what
 		self.target = targets['name']
