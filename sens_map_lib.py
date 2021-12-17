@@ -83,8 +83,10 @@ def run_simulate_observation(x1d, y1d, x_array, y_array, signal_array, exptime_a
 	#nx = len(x1d)
 	#for ix, x in enumerate(x1d): #Loop through each pixel in the sky object and use a kernel with 1/3 the FWHM of the beam size to 
 	#	for iy, y in enumerate(y1d):
-	for ix in range(len(x1d)):
-		for iy in range(len(y1d)):
+	nx = len(x1d)
+	ny = len(y1d)
+	for ix in range(nx):
+		for iy in range(ny):
 			#weights = gauss2d_simulate_obs(amplitude=1.0, xpos=x_array, ypos=y_array, x=x, y=y, stddev=one_third_stddev) #Generate weights for this position using the kernel
 			#weights = 1.0 * np.exp(-((x_array-x)**2 + (y_array-y)**2) / (2.0 * one_third_stddev**2))#Generate weights for this position using the kernel
 			weights = np.exp(-((x_array-x1d[ix])**2 + (y_array-y1d[iy])**2) / (2.0 * one_third_stddev**2))#Generate weights for this position using the kernel
@@ -98,9 +100,7 @@ def run_simulate_observation(x1d, y1d, x_array, y_array, signal_array, exptime_a
 				exptime[iy, ix] = 0.
 				data[iy, ix] = 0.
 		#print('Progress:', ix/nx)
-
 	#data /= exptime  #normalize simulated data by exposure time
-
 	return data, exptime
 
 
@@ -389,11 +389,13 @@ class sky:
 		iymin = find_nearest(ymin, self.y_1d)
 		iymax = find_nearest(ymax, self.y_1d)
 		return ixmin, ixmax, iymin, iymax
-	def plot(self, map_type='data', show_points=True, **kwargs): #Generate an expsoure map plot
+	def plot(self, map_type='data', show_points=True, fraction_completion=1.0, **kwargs): #Generate an expsoure map plot
 		# if np.any(self.signal != 0.): #Error catch to ensure we are not dividing by zero
 		# 	self.normalize()
 		if map_type == 'exposure':
-			pyplot.imshow(self.exptime, origin='lower', extent=self.extent, **kwargs)
+			min_exptime = np.nanpercentile(self.exptime, 2) / fraction_completion
+			max_exptime = np.nanpercentile(self.exptime, 98) / fraction_completion
+			pyplot.imshow(self.exptime, origin='lower', extent=self.extent, vmax=max_exptime, vmin=min_exptime, **kwargs)
 			label = r'Time (s)'
 			title = r'Exposure Time (s)'
 		elif map_type == 'signal': # if signal is set to true, plot the modeled signal instead
@@ -404,17 +406,18 @@ class sky:
 			title = r'Signal ($T_a$)'
 		elif map_type == 'noise':
 			#min_noise = np.nanmin(self.noise)
-			min_noise = np.nanpercentile(self.noise, 2)
-			pyplot.imshow(self.noise, origin='lower', extent=self.extent, vmax=2.0*min_noise, vmin=0.8*min_noise, **kwargs)
+			min_noise = np.nanpercentile(self.noise, 2) * fraction_completion**0.5
+			pyplot.imshow(self.noise, origin='lower', extent=self.extent, vmax=2.5*min_noise, vmin=0.8*min_noise, **kwargs)
 			#pyplot.imshow(self.noise, origin='lower', extent=self.extent, **kwargs)
 			label = r'$\Delta T_a$'
 			title = r'Noise ($\Delta T_a^*$)'
 		elif map_type == 's2n': #If s2n is true, plot the signal-to-noise
 			s2n = self.data/self.noise
-			#min_s2n = np.nanpercentile(s2n, 5)
-			#max_s2n = np.nanpercentile(s2n, 95)
-			#pyplot.imshow(s2n, origin='lower', extent=self.extent, vmax=max_s2n, vmin=min_s2n, **kwargs)
-			pyplot.imshow(s2n, origin='lower', extent=self.extent, **kwargs)
+			# min_s2n = np.nanpercentile(s2n, 5) / fraction_completion*0.5
+			# max_s2n = np.nanpercentile(s2n, 95) / fraction_completion*0.5
+			max_s2n = np.nanmax(s2n) / fraction_completion**0.5
+			pyplot.imshow(s2n, origin='lower', extent=self.extent, vmax=max_s2n, vmin=0.0, **kwargs)
+			# pyplot.imshow(s2n, origin='lower', extent=self.extent, **kwargs)
 			label = r'S/N'
 			title = r'S/N'
 		else: #Normally plot the simulated data
