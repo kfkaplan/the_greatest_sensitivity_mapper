@@ -446,7 +446,7 @@ class sky:
 		y_array = np.array(self.y_beam) #- self.plate_scale
 		signal_array = np.array(self.signal_beam)
 		exptime_array = np.array(self.exptime_beam)
-		convolved_variance = np.zeros(np.shape(self.data))
+		#convolved_variance = np.zeros(np.shape(self.data))
 
 		self.total_exptime = bn.nansum(exptime_array)
 
@@ -464,7 +464,7 @@ class sky:
 				# print('self.freq = ', self.freq)
 				# print('deltafreq = ', deltafreq)
 		if not self.TPOTF: #If not a Total Power OTF map (most observations)...
-			noise_for_one_second = (2.0 * Tsys) / ((self.deltafreq)**0.5) #Calulate RMS temperature (noise) using Equation 6-5 in the observer's handbook
+			noise_for_one_second = (np.sqrt(2.0) * Tsys) / ((self.deltafreq)**0.5) #Calulate RMS temperature (noise) using Equation 6-5 in the observer's handbook ***NOTE***: MODIFIED 2 TO SQRT(2) BECAUSE WE ARE ONLY USING THE ON TIME, NOT THE ON+OFF TIME AS SHOWN IN THE EQUATION
 		else: #If a Total Power Array OTF map....
 			noise_for_one_second = Tsys * (1.0 + self.Non**-0.5)**0.5 / (self.deltafreq)**0.5 #Calculate RMS temp. (noise) for TP OTF maps
 		self.noise_for_one_second = noise_for_one_second #tore the noise for one second in case it is needed for later recalculations
