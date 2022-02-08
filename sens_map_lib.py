@@ -184,8 +184,8 @@ class aor:
 			self.primary_frequency = 'LFAV'
 		frequencies = [] #Grab  frequencies 1,2,3,4,5
 		frequencies.append(float(instr_data['Frequency']) * 1e9) #HFA
-		frequencies.append(float(instr_data['Frequency2']) * 1e9) #4G1 or LFAH
-		frequencies.append(float(instr_data['Frequency3']) * 1e9) #4G2 or LFAV
+		frequencies.append(float(instr_data['Frequency2']) * 1e9) #4G1 or LFAV
+		frequencies.append(float(instr_data['Frequency3']) * 1e9) #4G2 or LFAH
 		if "Frequency4" in instr_data: #Check if using 4GREAT
 			frequencies.append(float(instr_data['Frequency4']) * 1e9) #4G3
 		else: #If not, just put zero as a placeholder
@@ -255,11 +255,11 @@ class aor:
 		if which_array.upper() == 'HFA':
 			array_obj = HFA_array()
 			array_obj.freq = self.frequencies[0]
-		elif which_array.upper() == 'LFAH':
-			array_obj = LFAH_array()
-			array_obj.freq = self.frequencies[1]
 		elif which_array.upper() == 'LFAV':
 			array_obj = LFAV_array()
+			array_obj.freq = self.frequencies[1]
+		elif which_array.upper() == 'LFAH':
+			array_obj = LFAH_array()
 			array_obj.freq = self.frequencies[2]
 		elif which_array.upper() == '4G_1':
 			array_obj = FG1_array()
