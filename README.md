@@ -32,7 +32,7 @@ Go to the git repo directory
 
 If you created a conda environment from environment.yml (see above), run the following in your terminal to activate the environment:
 ```
-conda activate the_great_sensitivty_mapper
+conda activate the_greatest_sensitivity_mapper
 
 ```
 Run the jupyter notebook GUI:
