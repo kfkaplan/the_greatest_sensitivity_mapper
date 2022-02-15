@@ -357,6 +357,7 @@ class sky:
 		self.WCS = wcs.WCS(naxis=2) #Define an astropy WCS object to allow fits files to be projected into this sky object
 		self.WCS.wcs.cdelt = [-plate_scale/3600.0, plate_scale/3600.0] #Define the X and Y scales
 		self.WCS.wcs.ctype = ["RA---TAN", "DEC--TAN"] #Define coordinates projection
+		self.per_beam = False #Stores if units for exp. time, noise, and S/N should be in per pixel (=False) or per beam (=True)
 		# ref_pix_x = 0
 		# ref_pix_y = 0
 		ref_pix_x = (self.x_1d[0] - self.x_1d[-1])/(2.0*plate_scale)+1
@@ -396,8 +397,12 @@ class sky:
 			min_exptime = np.nanpercentile(self.exptime, 2) / fraction_completion
 			max_exptime = np.nanpercentile(self.exptime, 98) / fraction_completion
 			pyplot.imshow(self.exptime, origin='lower', extent=self.extent, vmax=max_exptime, vmin=min_exptime, **kwargs)
-			label = r'Time (s)'
-			title = r'Exposure Time (s)'
+			if self.per_beam:
+				label = r'Time (s beam$^{-1}$)'
+				title = r'Exposure Time (s beam$^{-1}$)'
+			else: #Per pixel
+				label = r'Time (s pixel$^{-1}$)'
+				title = r'Exposure Time (s pixel$^{-1}$)'
 		elif map_type == 'signal': # if signal is set to true, plot the modeled signal instead
 			min_Ta = np.nanpercentile(self.signal, 2)
 			max_Ta = np.nanpercentile(self.signal, 99.5)
@@ -409,8 +414,12 @@ class sky:
 			min_noise = np.nanpercentile(self.noise, 2) * fraction_completion**0.5
 			pyplot.imshow(self.noise, origin='lower', extent=self.extent, vmax=2.5*min_noise, vmin=0.8*min_noise, **kwargs)
 			#pyplot.imshow(self.noise, origin='lower', extent=self.extent, **kwargs)
-			label = r'$\Delta T_a$'
-			title = r'Noise ($\Delta T_a^*$)'
+			if self.per_beam:
+				label = r'$\Delta T_a$ beam$^{-1}$'
+				title = r'Noise ($\Delta T_a^*$ beam$^{-1}$)'
+			else: #Per pixel
+				label = r'$\Delta T_a$ pixel$^{-1}$'
+				title = r'Noise ($\Delta T_a^*$ pixel$^{-1}$)'
 		elif map_type == 's2n': #If s2n is true, plot the signal-to-noise
 			s2n = self.data/self.noise
 			# min_s2n = np.nanpercentile(s2n, 5) / fraction_completion*0.5
@@ -418,8 +427,12 @@ class sky:
 			max_s2n = np.nanmax(s2n) / fraction_completion**0.5
 			pyplot.imshow(s2n, origin='lower', extent=self.extent, vmax=max_s2n, vmin=0.0, **kwargs)
 			# pyplot.imshow(s2n, origin='lower', extent=self.extent, **kwargs)
-			label = r'S/N'
-			title = r'S/N'
+			if self.per_beam:
+				label = r'S/N beam$^{-1}$'
+				title = r'S/N beam$^{-1}$'
+			else: #Per pixel
+				label = r'S/N pixel$^{-1}$'
+				title = r'S/N pixel$^{-1}$'
 		else: #Normally plot the simulated data
 			#min_Ta = 0.9 * bn.nanmin(self.data[np.isfinite(self.data)]) #Fix colorbar scale, especially for a uniform background
 			min_Ta = np.nanpercentile(self.data, 2)
@@ -437,7 +450,7 @@ class sky:
 	# 	scale_by = (self.total_exptime/self.pixel_area) / np.nansum(self.data)
 	# 	self.data *= scale_by
 	# 	self.noise *= scale_by
-	def simulate_observation(self, Tsys=0., deltafreq=1e6, deltav=0., TPOTF=False, Non=1, freq=0., simulate_noise=False, use_both_LFA_polarizations=False, fraction_completion=1.0): #Calculate noise and smooth the data and noisea by convolving with a 2D gausasian kernel with a FHWM that is 1/3 the beam profile, this is the final step for simulating data
+	def simulate_observation(self, Tsys=0., deltafreq=1e6, deltav=0., TPOTF=False, Non=1, freq=0., simulate_noise=False, per_beam=False, use_both_LFA_polarizations=False, fraction_completion=1.0): #Calculate noise and smooth the data and noisea by convolving with a 2D gausasian kernel with a FHWM that is 1/3 the beam profile, this is the final step for simulating data
 		if freq !=0.: #Allow user to manually set frequency
 			self.freq = freq
 
@@ -535,6 +548,15 @@ class sky:
 		if simulate_noise: #If user wants to add simulated noise to the simulated data
 			self.data += np.random.normal(0.0, self.noise, self.data.shape)
 
+		if per_beam: #If user wants variables in per beam, convert them
+			#pixel_area = abs( (x_array[1]-x_array[0]) * (y_array[1]-y_array[0]) ) #Take the ratio of the beam area to pixel area
+			pixel_area = self.plate_scale**2
+			beam_area = 2.0 * np.pi * fwhm2std(self.fwhm)**2
+			beam_to_pixel_area_ratio = beam_area / pixel_area
+			self.exptime *= beam_to_pixel_area_ratio #Scale exptime and noise to be s/beam and K/beam respectively
+			self.noise /= np.sqrt(beam_to_pixel_area_ratio)
+			self.per_beam = True #Store the fact these units are now in per beam for later calcualtions such as downsampling or to properly label units when making plots
+
 		# print('Total S/N: ',self.s2n())
 	def input(self, model_shape): #Draw an astropy model shape onto  sigal (e.g. create a model of the "true" signal)
 		self.signal += model_shape(self.x, self.y)
@@ -567,8 +589,15 @@ class sky:
 		self.data = array
 		img_hdu.data = self.exptime #Reproject exposure time
 		array, footprint = reproject_exact(img_hdu, new_header, parallel=True) 
-		self.exptime = array * factor**2
+		if not self.per_beam:  #If in units of per pixel and not per beam
+			self.exptime = array * factor**2
+		else:
+			self.exptime = array
 		self.noise = self.noise_for_one_second / self.exptime**0.5 #Recalculate noise using the new exposure time grid
+		# else: #If calculating beam per pixel, downsample the noise array as well
+		# 	img_hdu.data = self.noise**2 #Reproject artificial signal
+		# 	array, footprint = reproject_exact(img_hdu, new_header, parallel=True) 
+		# 	self.noise = np.sqrt(array)
 		self.WCS = new_WCS #Save updated wcs
 
 		# plate_scale = self.plate_scale * factor #calculate new plate scale
@@ -609,7 +638,10 @@ class sky:
 		kernel = Gaussian2DKernel(x_stddev=standard_deviation, y_stddev=standard_deviation)
 		self.data = convolve(self.data, kernel, boundary='extend') #Gaussian smooth data
 		self.exptime = convolve(self.data, kernel, boundary='extend') #Gaussian smooth exposure time
-		self.noise = self.noise_for_one_second / self.exptime**0.5 #Recalculate noise
+		if not self.per_Beam: #If in units of per pixel
+			self.noise = self.noise_for_one_second / self.exptime**0.5 #Recalculate noise
+		else: #Else if in units of per beam
+			self.exptime = np.sqrt(convolve(self.noise**2, kernel, boundary='extend')) #Gaussian smooth noise
 	def s2n(self, s2n_cut=1e-5): #Return total signal-to-noise value as a sanity check
 		goodpix = np.isfinite(self.noise) & np.isfinite(self.data)# & (self.data/self.noise > s2n_cut)
 		total_signal = bn.nansum(self.data[goodpix])
