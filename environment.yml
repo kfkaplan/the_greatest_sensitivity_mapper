@@ -1,13 +1,13 @@
 name: the_greatest_sensitivity_mapper
 channels:
   - astropy
-  - defaults
   - conda-forge
+  - defaults
 dependencies:
   - python
   - ipython
   - numpy
-  - scipy
+ # - scipy
   - matplotlib
   - astropy
   - numba
