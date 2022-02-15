@@ -2,7 +2,7 @@ name: the_greatest_sensitivity_mapper
 channels:
   - astropy
   - conda-forge
-  - defaults
+  #- defaults
 dependencies:
   - python
   - ipython
