@@ -218,13 +218,18 @@ class aor:
 				if self.map_type == 'GREAT_Raster':
 					self.Non = float(instr_data['OnsPerOff'])
 				elif self.map_type == 'GREAT_OTF':
-					self.Non = float(instr_data['LinesPerOff'])
+					#self.Non = float(instr_data['LinesPerOff'])
+					if instr_data["ScanDirection"] == "x_direction": #Non if scan direction is x
+						self.Non = self.nx * float(instr_data['LinesPerOff'])
+					elif instr_data["ScanDirection"] == "y_direction":: #Non if scan direction is y
+						self.Non = self.ny * float(instr_data['LinesPerOff'])
 		elif self.map_type == 'GREAT_ON_THE_FLY_HONEYCOMB_MAP':
 			self.time = float(instr_data['TimePerPoint'])
 			self.map_angle = float(instr_data['ArrayRotationAngle'])
 			self.x = float(instr_data['TargetOffsetRA'])
 			self.y = float(instr_data['TargetOffsetDec'])
 			self.nod_type = instr_data['NodType'] #'Total_Power', 'Dual_Beam_Switch', ect.
+			self.Non = 25 / float(instr_data['OffPerPattern'])
 		elif self.map_type == 'GREAT_ON_THE_FLY_ARRAY_MAPPING':
 			self.nod_type = instr_data['NodType'] #'Total_Power', 'Dual_Beam_Switch', ect.
 			self.Non = float(instr_data['LinesPerOff'])
@@ -292,6 +297,9 @@ class aor:
 		elif self.map_type == 'GREAT_ON_THE_FLY_HONEYCOMB_MAP':
 			array_obj.primary_frequency = self.primary_frequency
 			array_obj.honeycomb(skyobj, x=self.x, y=self.y, array_angle=self.array_angle, map_angle=self.map_angle, cycles=self.cycles, time=self.time)
+			if self.nod_type == 'Total_Power': #Set a few parameters to ensure proper calculation of Total Power Array OTF maps
+				skyobj.TPOTF = True
+				skyobj.Non = self.Non
 		elif self.map_type == 'GREAT_ON_THE_FLY_ARRAY_MAPPING':
 			
 			if self.nod_type == 'Total_Power': #Set a few parameters to ensure proper calculation of Total Power Array OTF maps
