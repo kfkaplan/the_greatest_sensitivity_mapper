@@ -221,7 +221,7 @@ class aor:
 					#self.Non = float(instr_data['LinesPerOff'])
 					if instr_data["ScanDirection"] == "x_direction": #Non if scan direction is x
 						self.Non = self.nx * float(instr_data['LinesPerOff'])
-					elif instr_data["ScanDirection"] == "y_direction":: #Non if scan direction is y
+					elif instr_data["ScanDirection"] == "y_direction": #Non if scan direction is y
 						self.Non = self.ny * float(instr_data['LinesPerOff'])
 		elif self.map_type == 'GREAT_ON_THE_FLY_HONEYCOMB_MAP':
 			self.time = float(instr_data['TimePerPoint'])
@@ -232,7 +232,7 @@ class aor:
 			self.Non = 25 / float(instr_data['OffPerPattern'])
 		elif self.map_type == 'GREAT_ON_THE_FLY_ARRAY_MAPPING':
 			self.nod_type = instr_data['NodType'] #'Total_Power', 'Dual_Beam_Switch', ect.
-			self.Non = float(instr_data['LinesPerOff'])
+			#self.Non = float(instr_data['LinesPerOff'])
 			self.map_angle = float(instr_data['MapRotationAngle'])
 			self.nscans = int(instr_data['NumFillOTF'])
 			self.x = float(instr_data['MapCenterOffsetRA'])
@@ -244,11 +244,19 @@ class aor:
 				self.x_time = float(instr_data['XMapTimePerPoint'])
 				self.x_blocks_scan = int(instr_data['XMapNumBlocksX'])
 				self.x_blocks_perp = int(instr_data['XMapNumBlocksY'])
+				if self.nod_type == "Total_Power":
+					self.x_Non = self.x_length * float(instr_data['ArrayWidth']) / self.stepsize
+				else:
+					self.x_Non = 1
 			if self.scan_direction == 'y_direction' or self.scan_direction == 'x_and_y_directions':
 				self.y_length = float(instr_data['YMapScanLength'])
 				self.y_time = float(instr_data['YMapTimePerPoint'])
 				self.y_blocks_scan = int(instr_data['YMapNumBlocksY'])
 				self.y_blocks_perp = int(instr_data['YMapNumBlocksX'])
+				if self.nod_type == "Total_Power":
+					self.y_Non = self.y_length * float(instr_data['ArrayWidth']) / self.stepsize
+				else:
+					self.y_Non = 1
 		else:
 			print('ERROR: '+self.map_type+' is not a valid map type to paint in the sky.')
 	def target_offsets(self, input_aor): #Get offsets between two different AOR targets in arcsec in RA and Dec. (see https://docs.astropy.org/en/stable/api/astropy.coordinates.SkyCoord.html#astropy.coordinates.SkyCoord.spherical_offsets_to)
@@ -287,30 +295,29 @@ class aor:
 		# print('map_type = ', self.map_type)
 		# print('nod_type = ', self.nod_type)
 		if self.map_type == 'GREAT_SP':
-			array_obj.single_point(skyobj, x=self.x, y=self.y, time=self.time, array_angle=self.array_angle, cycles=self.cycles)
+			array_obj.single_point(skyobj, x=self.x, y=self.y, time=self.time, array_angle=self.array_angle, cycles=self.cycles, Non=self.Non)
 		elif self.map_type == 'GREAT_Raster' or self.map_type == 'GREAT_OTF':
 			#if self.map_type == 'GREAT_OTF' and self.nod_type == 'Total_Power':  #Set a few parameters to ensure proper calculation of Total Power OTF maps
-			if self.nod_type == 'Total_Power':  #Set a few parameters to ensure proper calculation of Total Power OTF (or raster) maps
-				skyobj.TPOTF = True
-				skyobj.Non = self.Non
-			array_obj.map(skyobj, x=self.x, y=self.y, nx=self.nx, ny=self.ny, dx=self.dx, dy=self.dy, array_angle=self.array_angle, map_angle=self.map_angle, cycles=self.cycles, time=self.time)
+			# if self.nod_type == 'Total_Power':  #Set a few parameters to ensure proper calculation of Total Power OTF (or raster) maps
+			# 	skyobj.TPOTF = True
+			# 	skyobj.Non = self.Non
+			array_obj.map(skyobj, x=self.x, y=self.y, nx=self.nx, ny=self.ny, dx=self.dx, dy=self.dy, array_angle=self.array_angle, map_angle=self.map_angle, cycles=self.cycles, time=self.time, Non=self.Non)
 		elif self.map_type == 'GREAT_ON_THE_FLY_HONEYCOMB_MAP':
 			array_obj.primary_frequency = self.primary_frequency
-			array_obj.honeycomb(skyobj, x=self.x, y=self.y, array_angle=self.array_angle, map_angle=self.map_angle, cycles=self.cycles, time=self.time)
-			if self.nod_type == 'Total_Power': #Set a few parameters to ensure proper calculation of Total Power Array OTF maps
-				skyobj.TPOTF = True
-				skyobj.Non = self.Non
+			array_obj.honeycomb(skyobj, x=self.x, y=self.y, array_angle=self.array_angle, map_angle=self.map_angle, cycles=self.cycles, time=self.time, Non=self.Non)
+			# if self.nod_type == 'Total_Power': #Set a few parameters to ensure proper calculation of Total Power Array OTF maps
+			# 	skyobj.TPOTF = True
+			# 	skyobj.Non = self.Non
 		elif self.map_type == 'GREAT_ON_THE_FLY_ARRAY_MAPPING':
-			
-			if self.nod_type == 'Total_Power': #Set a few parameters to ensure proper calculation of Total Power Array OTF maps
-				skyobj.TPOTF = True
-				skyobj.Non = self.Non
+			# if self.nod_type == 'Total_Power': #Set a few parameters to ensure proper calculation of Total Power Array OTF maps
+			# 	skyobj.TPOTF = True
+			# 	skyobj.Non = self.Non
 			if self.scan_direction == 'x_direction' or self.scan_direction == 'x_and_y_directions': #Scans in x direction
 					array_obj.array_otf(skyobj, x=self.x, y=self.y, nblock_scan=self.x_blocks_scan, nblock_perp=self.x_blocks_perp, step=self.stepsize, length=self.x_length, 
-							time=self.x_time, cycles=self.cycles, map_angle=self.map_angle, direction='x', nscans=self.nscans)
+							time=self.x_time, cycles=self.cycles, map_angle=self.map_angle, direction='x', nscans=self.nscans, Non=self.x_Non)
 			if self.scan_direction == 'y_direction' or self.scan_direction == 'x_and_y_directions': #Scans in y direction
 					array_obj.array_otf(skyobj, x=self.x, y=self.y, nblock_scan=self.y_blocks_scan, nblock_perp=self.y_blocks_perp, step=self.stepsize, length=self.y_length, 
-							time=self.y_time, cycles=self.cycles, map_angle=self.map_angle, direction='y', nscans=self.nscans)
+							time=self.y_time, cycles=self.cycles, map_angle=self.map_angle, direction='y', nscans=self.nscans, Non=self.y_Non)
 
 
 #Class that stores the 2D array representing the sky and it's associated coordinate system
@@ -326,6 +333,7 @@ class sky:
 		ny = int((y_range[1]-y_range[0])/plate_scale) + 1
 		signal = np.zeros([ny, nx])
 		noise = np.zeros([ny, nx])
+		noise[:] = np.inf #Make noise infinite
 		data = np.zeros([ny, nx])
 		sigma = np.zeros([ny, nx])
 		exptime = np.zeros([ny, nx])
@@ -362,6 +370,7 @@ class sky:
 		self.exptime_beam = []
 		self.signal_beam = []
 		self.beam_profiles = []
+		self.Non = []
 		self.WCS = wcs.WCS(naxis=2) #Define an astropy WCS object to allow fits files to be projected into this sky object
 		self.WCS.wcs.cdelt = [-plate_scale/3600.0, plate_scale/3600.0] #Define the X and Y scales
 		self.WCS.wcs.ctype = ["RA---TAN", "DEC--TAN"] #Define coordinates projection
@@ -387,7 +396,7 @@ class sky:
 	def clear(self): #Erase everything on the grid except for the signal
 		self.data[:] = 0.
 		self.exptime[:] = 0.
-		self.noise[:] = 0.
+		self.noise[:] = np.inf
 		self.x_beam = []
 		self.y_beam = []
 		self.exptime_beam = []
@@ -461,88 +470,112 @@ class sky:
 	def simulate_observation(self, Tsys=0., deltafreq=1e6, deltav=0., TPOTF=False, Non=1, freq=0., simulate_noise=False, per_beam=False, use_both_LFA_polarizations=False, fraction_completion=1.0): #Calculate noise and smooth the data and noisea by convolving with a 2D gausasian kernel with a FHWM that is 1/3 the beam profile, this is the final step for simulating data
 		if freq !=0.: #Allow user to manually set frequency
 			self.freq = freq
+		if deltav > 0: #If user specifies the size of the spectral element in km/s, use that to calculate deltafreq instead of deltafreq being provided
+			self.deltafreq = (deltav / 299792.458) * self.freq
 
 		one_third_stddev = fwhm2std(self.fwhm) / 3.0 #Set up convolving kerneal for cygrid to be a 2D guassian with 1/3 the FWHM of the beam profiles
 		x_array = np.array(self.x_beam) #- self.plate_scale
 		y_array = np.array(self.y_beam) #- self.plate_scale
 		signal_array = np.array(self.signal_beam)
 		exptime_array = np.array(self.exptime_beam)
-		#convolved_variance = np.zeros(np.shape(self.data))
-
-		self.total_exptime = bn.nansum(exptime_array)
-
-		noise_array = np.zeros(len(x_array))
+		Non_array = np.array(self.Non)
 
 
-		#Calculate variance
-		if TPOTF: #If user specifies Total Power OTF, set the proper variables
-			self.TPOTF = True
-			self.Non = Non
-		if deltav > 0: #If user specifies the size of the spectral element in km/s, use that to calculate deltafreq instead of deltafreq being provided
-				self.deltafreq = (deltav / 299792.458) * self.freq
-		else:
-			self.deltafreq = deltafreq
-				# print('self.freq = ', self.freq)
-				# print('deltafreq = ', deltafreq)
-		if not self.TPOTF: #If not a Total Power OTF map (most observations)...
-			noise_for_one_second = (np.sqrt(2.0) * Tsys) / ((self.deltafreq)**0.5) #Calulate RMS temperature (noise) using Equation 6-5 in the observer's handbook ***NOTE***: MODIFIED 2 TO SQRT(2) BECAUSE WE ARE ONLY USING THE ON TIME, NOT THE ON+OFF TIME AS SHOWN IN THE EQUATION
-		else: #If a Total Power Array OTF map....
-			noise_for_one_second = Tsys * (1.0 + self.Non**-0.5)**0.5 / (self.deltafreq)**0.5 #Calculate RMS temp. (noise) for TP OTF maps
-		self.noise_for_one_second = noise_for_one_second #tore the noise for one second in case it is needed for later recalculations
-		#self.noise_beam = noise_for_one_second / exptime_array
-		#self.s2n_beam = signal_array / self.noise_beam
-		#noise_array = noise_array * exptime_array
-		# noise_array = noise #/ (exptime_array**0.5)
-		# print('Noise per beam', noise_array)
+		find_unique_Non = np.unique(Non_array)
+		data_shape = np.shape(self.data)
+		# self.total_exptime = bn.nansum(exptime_array)
+		for unique_Non in find_unique_Non: #Loop through each unique value of Non
+			i = Non_array == unique_Non
+			noise_for_one_second = Tsys * (1.0 + unique_Non**-0.5)**0.5 / (self.deltafreq)**0.5  #Calculate RMS temp. (noise) for all maps (note: for non TP maps, Non should = 1 thus reduce the equation to noise_for_one_second = (np.sqrt(2.0) * Tsys) / ((self.deltafreq)**0.5) )
+			total_exp_time = bn.nansum(exptime_array[i])
+			data_out, exptime_out = run_simulate_observation(self.x_1d, self.y_1d, x_array[i], y_array[i], signal_array[i], exptime_array[i], one_third_stddev, np.zeros(data_shape), np.zeros(data_shape)) #Simulate this chunk of observations with all the same Non
+			exptime_out *=  fraction_completion * (total_exp_time/bn.nansum(exptime_out)) #Scale exptime to fraction of observations complete
+			noise_out = noise_for_one_second  / ((exptime_out)**0.5) #Calculate noise based on exp time
 
-		# print('S/N per beam', signal_array/noise_array)
-		# print()
-		#total_beam_signal = bn.nansum(signal_array/exptime_array)
-		#total_beam_noise = bn.nansum((noise_for_one_second*len(signal_array))**2/exptime_array)**0.5
-		# print('Total beam signal:', total_beam_signal)
-		# print('Total beam noise:', total_beam_noise)
-		# print('Total beam S/N:', total_beam_signal/total_beam_noise)
+			self.data += data_out #Combine data exptime and noise maps for all unique instances of Non
+			self.exptime += exptime_out
+			self.noise = ( self.noise**-2 + noise_out**-2 )**-0.5
 
-		#convolved_variance = np.zeros(np.shape(self.data))
-		# #Paint variance onto 2D variance array starting by making the variance point sources as narrow gaussians
-		# fwhm = self.fwhm / 10.0 #Set parameters for 2D gaussian
-		# stddev = fwhm / (2.0 * np.sqrt(np.log(2.0)))#Convert FWHM to stddev
-		# for i in range(len(self.x_beam)): #Loop through each beam and create a point source for the variance
-		# 	gauss_model =  models.Gaussian2D(amplitude=1.0, x_mean=self.x_beam[i], y_mean=self.y_beam[i], x_stddev=stddev, y_stddev=stddev)
-
-		# 	point_source_gaussian = gauss_model(self.x, self.y)
-		# 	point_source_gaussian = noise_array[i]**2 * point_source_gaussian / bn.nansum(point_source_gaussian) #Normalize gaussian
+		# #convolved_variance = np.zeros(np.shape(self.data))
 
 
-		# # 	variance +=  point_source_gaussian
-		# n_beams = len(self.beam_profiles)
-		# variance_array = np.zeros(n_beams)
-		# for i in range(n_beams):
-		# 	chunk_of_array_profile = self.beam_profiles[i](self.x, self.y) #Isolate the beam profile on the sky to use 
-		# 	sum_chunk_of_array_profile = bn.nansum(chunk_of_array_profile)
-		# 	variance_array[i] = bn.nansum(variance * chunk_of_array_profile) / sum_chunk_of_array_profile #Convovle assumed signal on sky with beam profile
 
-		# nx = len(self.x_1d)
-		# for ix, x in enumerate(self.x_1d): #Loop through each pixel in the sky object and use a kernel with 1/3 the FWHM of the beam size to 
-		# 	for iy, y in enumerate(self.y_1d):
-		# 		weights = gauss2d_simulate_obs(amplitude=1.0, xpos=x_array, ypos=y_array, x=x, y=y, stddev=one_third_stddev) #Generate weights for this position using the kernel
-		# 		#weights /= bn.nansum(weights) #Normalize weights
-		# 		self.data[iy, ix] = bn.nansum(signal_array * weights) #Convolve simualted signal on sky with kernel to claculate signal at this pixel
-		# 		self.exptime[iy, ix] = bn.nansum(exptime_array * weights)#/self.plate_scale**2 #Convolve exposure time with kernel to calulate the exposure time for this specific pixel
-		# 		#exptime_weighted_for_noise[iy, ix] = bn.nansum(exptime_array * weights**0.5)
-		# 		#convolved_variance[iy, ix] = bn.nansum(variance_array * weights)
+		# noise_array = np.zeros(len(x_array))
 
-		# 		#convolved_variance[iy, ix] = bn.nansum(noise_array**2 * exptime_array * weights)
-		# 	print('Progress: ', ix / nx)
 
-		#self.data, self.exptime = run_simulate_observation(self.x_1d - 0.5*self.plate_scale, self.y_1d - 0.5*self.plate_scale, x_array, y_array, signal_array, exptime_array, one_third_stddev, self.data, self.exptime)
-		self.data, self.exptime = run_simulate_observation(self.x_1d, self.y_1d, x_array, y_array, signal_array, exptime_array, one_third_stddev, self.data, self.exptime)
 
-		#self.data /= (self.exptime) #normalize simulated data by exposure time
-		self.exptime *=  fraction_completion * self.total_exptime / bn.nansum(self.exptime)
-		#self.noise = (convolved_variance / self.exptime)**0.5
-		#self.noise = noise  / ((self.exptime * self.plate_scale**2)**0.5)
-		self.noise = self.noise_for_one_second  / ((self.exptime)**0.5)
+
+		# #Calculate variance
+		# if TPOTF: #If user specifies Total Power OTF, set the proper variables
+		# 	self.TPOTF = True
+		# 	self.Non = Non
+
+		# else:
+		# 	self.deltafreq = deltafreq
+		# 		# print('self.freq = ', self.freq)
+		# 		# print('deltafreq = ', deltafreq)
+		# if not self.TPOTF: #If not a Total Power OTF map (most observations)...
+		# 	noise_for_one_second = (np.sqrt(2.0) * Tsys) / ((self.deltafreq)**0.5) #Calulate RMS temperature (noise) using Equation 6-5 in the observer's handbook ***NOTE***: MODIFIED 2 TO SQRT(2) BECAUSE WE ARE ONLY USING THE ON TIME, NOT THE ON+OFF TIME AS SHOWN IN THE EQUATION
+		# else: #If a Total Power Array OTF map....
+		# 	noise_for_one_second = Tsys * (1.0 + self.Non**-0.5)**0.5 / (self.deltafreq)**0.5 #Calculate RMS temp. (noise) for TP OTF maps
+		# self.noise_for_one_second = noise_for_one_second #tore the noise for one second in case it is needed for later recalculations
+		# #self.noise_beam = noise_for_one_second / exptime_array
+		# #self.s2n_beam = signal_array / self.noise_beam
+		# #noise_array = noise_array * exptime_array
+		# # noise_array = noise #/ (exptime_array**0.5)
+		# # print('Noise per beam', noise_array)
+
+		# # print('S/N per beam', signal_array/noise_array)
+		# # print()
+		# #total_beam_signal = bn.nansum(signal_array/exptime_array)
+		# #total_beam_noise = bn.nansum((noise_for_one_second*len(signal_array))**2/exptime_array)**0.5
+		# # print('Total beam signal:', total_beam_signal)
+		# # print('Total beam noise:', total_beam_noise)
+		# # print('Total beam S/N:', total_beam_signal/total_beam_noise)
+
+		# #convolved_variance = np.zeros(np.shape(self.data))
+		# # #Paint variance onto 2D variance array starting by making the variance point sources as narrow gaussians
+		# # fwhm = self.fwhm / 10.0 #Set parameters for 2D gaussian
+		# # stddev = fwhm / (2.0 * np.sqrt(np.log(2.0)))#Convert FWHM to stddev
+		# # for i in range(len(self.x_beam)): #Loop through each beam and create a point source for the variance
+		# # 	gauss_model =  models.Gaussian2D(amplitude=1.0, x_mean=self.x_beam[i], y_mean=self.y_beam[i], x_stddev=stddev, y_stddev=stddev)
+
+		# # 	point_source_gaussian = gauss_model(self.x, self.y)
+		# # 	point_source_gaussian = noise_array[i]**2 * point_source_gaussian / bn.nansum(point_source_gaussian) #Normalize gaussian
+
+
+		# # # 	variance +=  point_source_gaussian
+		# # n_beams = len(self.beam_profiles)
+		# # variance_array = np.zeros(n_beams)
+		# # for i in range(n_beams):
+		# # 	chunk_of_array_profile = self.beam_profiles[i](self.x, self.y) #Isolate the beam profile on the sky to use 
+		# # 	sum_chunk_of_array_profile = bn.nansum(chunk_of_array_profile)
+		# # 	variance_array[i] = bn.nansum(variance * chunk_of_array_profile) / sum_chunk_of_array_profile #Convovle assumed signal on sky with beam profile
+
+		# # nx = len(self.x_1d)
+		# # for ix, x in enumerate(self.x_1d): #Loop through each pixel in the sky object and use a kernel with 1/3 the FWHM of the beam size to 
+		# # 	for iy, y in enumerate(self.y_1d):
+		# # 		weights = gauss2d_simulate_obs(amplitude=1.0, xpos=x_array, ypos=y_array, x=x, y=y, stddev=one_third_stddev) #Generate weights for this position using the kernel
+		# # 		#weights /= bn.nansum(weights) #Normalize weights
+		# # 		self.data[iy, ix] = bn.nansum(signal_array * weights) #Convolve simualted signal on sky with kernel to claculate signal at this pixel
+		# # 		self.exptime[iy, ix] = bn.nansum(exptime_array * weights)#/self.plate_scale**2 #Convolve exposure time with kernel to calulate the exposure time for this specific pixel
+		# # 		#exptime_weighted_for_noise[iy, ix] = bn.nansum(exptime_array * weights**0.5)
+		# # 		#convolved_variance[iy, ix] = bn.nansum(variance_array * weights)
+
+		# # 		#convolved_variance[iy, ix] = bn.nansum(noise_array**2 * exptime_array * weights)
+		# # 	print('Progress: ', ix / nx)
+
+		# #self.data, self.exptime = run_simulate_observation(self.x_1d - 0.5*self.plate_scale, self.y_1d - 0.5*self.plate_scale, x_array, y_array, signal_array, exptime_array, one_third_stddev, self.data, self.exptime)
+
+
+
+		# self.data, self.exptime = run_simulate_observation(self.x_1d, self.y_1d, x_array, y_array, signal_array, exptime_array, one_third_stddev, self.data, self.exptime)
+
+		# #self.data /= (self.exptime) #normalize simulated data by exposure time
+		# self.exptime *=  fraction_completion * self.total_exptime / bn.nansum(self.exptime)
+		# #self.noise = (convolved_variance / self.exptime)**0.5
+		# #self.noise = noise  / ((self.exptime * self.plate_scale**2)**0.5)
+		# self.noise = self.noise_for_one_second  / ((self.exptime)**0.5)
 		mask = self.exptime < 1e-5 #Mask out pixels with near zero exposure
 		self.exptime[mask] = 0.0
 		self.data[mask] = 0.0
@@ -588,20 +621,31 @@ class sky:
 		# ny = int((self.y_range[1]-self.y_range[0])/plate_scale)
 		new_header['NAXIS1'] =  nx
 		new_header['NAXIS2'] =  ny
+		#Reproject artificial signal
 		img_hdu = fits.ImageHDU(header=self.WCS.to_header()) #Encapsulate everything an ImageHDU object for running repropject
-		img_hdu.data = self.signal #Reproject artificial signal
-		array, footprint = reproject_exact(img_hdu, new_header, parallel=True) 
+		img_hdu.data = self.signal 
+		array, footprint = reproject_exact(img_hdu, new_header, parallel=True)
 		self.signal = array
-		img_hdu.data = self.data #Reproject simulated signal
-		array, footprint = reproject_exact(img_hdu, new_header, parallel=True) 
+		#Reproject simulated signal
+		img_hdu.data = self.data 
+		array, footprint = reproject_exact(img_hdu, new_header, parallel=True)
 		self.data = array
-		img_hdu.data = self.exptime #Reproject exposure time
-		array, footprint = reproject_exact(img_hdu, new_header, parallel=True) 
+		 #Reproject exposure time
+		img_hdu.data = self.exptime
+		array, footprint = reproject_exact(img_hdu, new_header, parallel=True)
 		if not self.per_beam:  #If in units of per pixel and not per beam
 			self.exptime = array * factor**2
 		else:
 			self.exptime = array
-		self.noise = self.noise_for_one_second / self.exptime**0.5 #Recalculate noise using the new exposure time grid
+		#Reproject noise
+		img_hdu.data = self.noise**-2
+		array, footprint = reproject_exact(img_hdu, new_header, parallel=True)
+		if not self.per_beam:  #If in units of per pixel and not per beam
+			self.noise = (array * factor**2)**-0.5
+		else:
+			self.noise = array**-0.5
+
+		#$ self.noise = self.noise_for_one_second / self.exptime**0.5 #Recalculate noise using the new exposure time grid
 		# else: #If calculating beam per pixel, downsample the noise array as well
 		# 	img_hdu.data = self.noise**2 #Reproject artificial signal
 		# 	array, footprint = reproject_exact(img_hdu, new_header, parallel=True) 
@@ -646,10 +690,7 @@ class sky:
 		kernel = Gaussian2DKernel(x_stddev=standard_deviation, y_stddev=standard_deviation)
 		self.data = convolve(self.data, kernel, boundary='extend') #Gaussian smooth data
 		self.exptime = convolve(self.data, kernel, boundary='extend') #Gaussian smooth exposure time
-		if not self.per_Beam: #If in units of per pixel
-			self.noise = self.noise_for_one_second / self.exptime**0.5 #Recalculate noise
-		else: #Else if in units of per beam
-			self.exptime = np.sqrt(convolve(self.noise**2, kernel, boundary='extend')) #Gaussian smooth noise
+		self.exptime = np.sqrt(convolve(self.noise**2, kernel, boundary='extend')) #Gaussian smooth noise
 	def s2n(self, s2n_cut=1e-5): #Return total signal-to-noise value as a sanity check
 		goodpix = np.isfinite(self.noise) & np.isfinite(self.data)# & (self.data/self.noise > s2n_cut)
 		total_signal = bn.nansum(self.data[goodpix])
@@ -759,7 +800,7 @@ class GREAT_array:
 	def reset_array_rotation(self): #Rotate back to an angle of zero
 		self.set_array_rotation(-self.angle)
 		self.angle = 0.
-	def paint(self, skyobj, time=1.0, cycles=1, TPOTF=False): #Paint a single instance of the array profile onto a sky object, this is the base for all observation types including single pointing and maps
+	def paint(self, skyobj, time=1.0, cycles=1, TPOTF=False, Non=1): #Paint a single instance of the array profile onto a sky object, this is the base for all observation types including single pointing and maps
 		#skyobj.total_exptime += time*cycles #Add exposure time from this to the total
 		# deltaTa = get_deltaTa(Tsys=Tsys, TPOTF=TPOTF) #Get RMS antenna temperature 
 		skyobj.fwhm = std2fwhm(self.array_profile[0].x_stddev) #Copy beam profile FWHM to sky object for later using to determine the convolution kernel to smooth with
@@ -785,6 +826,7 @@ class GREAT_array:
 				skyobj.exptime_beam.append(exptime)
 				skyobj.signal_beam.append(convolved_signal * exptime)
 				skyobj.beam_profiles.append(this_array_profile)
+				skyobj.Non.append(Non)
 	##### backup of old paint method
 	# def paint(self, skyobj, time=1.0, cycles=1, TPOTF=False): #Paint a single instance of the array profile onto a sky object, this is the base for all observation types including single pointing and maps
 	# 	#skyobj.total_exptime += time*cycles #Add exposure time from this to the total
@@ -813,13 +855,13 @@ class GREAT_array:
 	# 	# 	skyobj.data[iy1:iy2, ix1:ix2] += convolved_signal * time * cycles #Convolve pattern with expected signal and paint result onto the sky
 	# 	# 	skyobj.exptime[iy1:iy2, ix1:ix2] += time * cycles * chunk_of_array_profile #Convolve the exposure time with the profile for this particular pixel
 	# 	# 	skyobj.fwhm = std2fwhm(self.array_profile.x_stddev) #Copy beam profile FWHM to sky object for later using to determine the convolution kernel to smooth with
-	def single_point(self, skyobj, x=0., y=0., time=1.0, array_angle=0., cycles=1): #Paint a single point observation onto the sky object	
+	def single_point(self, skyobj, x=0., y=0., time=1.0, array_angle=0., cycles=1, Non=1): #Paint a single point observation onto the sky object	
 		if self.freq > 0.: #Pass through the frequency to the sky object if it is specified for this array
 			skyobj.freq = self.freq
 		self.rotate(array_angle) #Set rotation angle
 		self.position(x, y) #Set central position for the single pointing
-		self.paint(skyobj, time=time, cycles=cycles) #Paint the single pointing to the sky object
-	def map(self, skyobj, x=0., y=0., nx=1, ny=1, dx=1.0, dy=1.0, time=1.0, cycles=1, array_angle=0., map_angle=0.): #Paint a raster or OFT map observation onto the sky object
+		self.paint(skyobj, time=time, cycles=cycles, Non=Non) #Paint the single pointing to the sky object
+	def map(self, skyobj, x=0., y=0., nx=1, ny=1, dx=1.0, dy=1.0, time=1.0, cycles=1, array_angle=0., map_angle=0., Non=1): #Paint a raster or OFT map observation onto the sky object
 		if self.freq > 0.: #Pass through the frequency to the sky object if it is specified for this array
 			skyobj.freq = self.freq
 		self.rotate(array_angle) #Set rotation angle
@@ -833,8 +875,8 @@ class GREAT_array:
 		for ix in range(nx): #Loop through each step in the map
 			for iy in range(ny):
 				self.position(rotated_map_x[iy,ix], rotated_map_y[iy,ix]) #Set array position at this step
-				self.paint(skyobj, time=time, cycles=cycles) #Paint the current step to the sky object
-	def honeycomb(self, skyobj, x=0., y=0., time=1.0, cycles=1, array_angle=0., map_angle=0., LFA=False, HFA=False):
+				self.paint(skyobj, time=time, cycles=cycles, Non=Non) #Paint the current step to the sky object
+	def honeycomb(self, skyobj, x=0., y=0., time=1.0, cycles=1, array_angle=0., map_angle=0., LFA=False, HFA=False, Non=1):
 		if self.freq > 0.: #Pass through the frequency to the sky object if it is specified for this array
 			skyobj.freq = self.freq
 		self.rotate(array_angle) #Set rotation angle
@@ -856,8 +898,8 @@ class GREAT_array:
 		honeycomb_map_positions = np.array([x,y]).T + (honeycomb_pattern*honeycomb_multiplier).dot(rot_matrix) #Construct a vector of honeycomb positions and dot it with the rotation matrix
 		for honeycomb_map_position in honeycomb_map_positions:
 			self.position(honeycomb_map_position[0], honeycomb_map_position[1]) #Set array position at this step
-			self.paint(skyobj, time=time, cycles=cycles) #Paint the current step to the sky object
-	def array_otf(self, skyobj, nblock_scan=1, nblock_perp=1, x=0, y=0, step=1.0, length=1.0, time=1.0, cycles=1, map_angle=0., direction='x', nscans=2): #Paint a set of array otf blocks in a particular direction (x or y)
+			self.paint(skyobj, time=time, cycles=cycles, Non=Non) #Paint the current step to the sky object
+	def array_otf(self, skyobj, nblock_scan=1, nblock_perp=1, x=0, y=0, step=1.0, length=1.0, time=1.0, cycles=1, map_angle=0., direction='x', nscans=2, Non=1): #Paint a set of array otf blocks in a particular direction (x or y)
 		if self.freq > 0.: #Pass through the frequency to the sky object if it is specified for this array
 			skyobj.freq = self.freq
 		block_angle = map_angle #the block angle is the same as the map angle
@@ -886,7 +928,7 @@ class GREAT_array:
 			for iy in range(n_block_y): #Paint blocks along y direction
 				skyobj.x_map_center_points.append(rotated_block_x[iy, ix]) #Save center of each block into the sky object for later checking and/or plotting
 				skyobj.y_map_center_points.append(rotated_block_y[iy, ix])
-				self.array_otf_block(skyobj, x=rotated_block_x[iy, ix], y=rotated_block_y[iy, ix], step=step, length=length, time=time, cycles=cycles, map_angle=map_angle, direction=direction, nscans=nscans)
+				self.array_otf_block(skyobj, x=rotated_block_x[iy, ix], y=rotated_block_y[iy, ix], step=step, length=length, time=time, cycles=cycles, map_angle=map_angle, direction=direction, nscans=nscans, Non=Non)
 	def array_otf_block(self, skyobj, x=0., y=0., step=1.0, length=1.0, time=1.0, cycles=1, map_angle=0., direction='x', nscans=2, TPOTF=False, Non=1): #Paint a single block for an Array OTF Map onto
 		if self.type == 'LFAV' or self.type == 'LFAH': #Set length of block in arcseconds to be length * array size
 			length_arcsec = length * 72.6
@@ -908,7 +950,7 @@ class GREAT_array:
 			dy = step
 		else:
 			print('ERROR: Array OTF block direction needs to be specified as x or y.')
-		self.map(skyobj, x=x, y=y, nx=nx, ny=ny, dx=dx, dy=dy, time=time, cycles=cycles, array_angle=array_angle, map_angle=map_angle) #Paint a map
+		self.map(skyobj, x=x, y=y, nx=nx, ny=ny, dx=dx, dy=dy, time=time, cycles=cycles, array_angle=array_angle, map_angle=map_angle, Non=Non) #Paint a map
 	# def get_deltaTa_singlepoint(self, deltafreq=1.0, time=1.0): #Get the RMS antenna temperature (delta-Ta) for a single pointing (when time on = time off)
 	# 	deltaTa = 2.0 * self.get_Tsys() / (time * deltafreq)**0.5 #Equation 6-5 in the observer's handbook
 	# 	return deltaTa
