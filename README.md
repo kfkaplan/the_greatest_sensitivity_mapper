@@ -13,7 +13,7 @@ The GUI notebook will open in a web-browser.  Activate the cell with the code by
 The program can be conveniently run online using the service http://mybinder.org.    Note that if you find mybinder.org too slow, we recommend you install and run the GREAT Exposure Mapper Program on your own machine.
 
 To run online, click the following link (when first run, it can take several minutes for the environment to build so please be patient):
-https://mybinder.org/v2/gh/kfkaplan/the_greatest_sensitivity_mapper/782c6af1c93ea438250a4020b496eefbd96402eb?urlpath=lab%2Ftree%2FGUI.ipynb
+https://mybinder.org/v2/gh/kfkaplan/the_greatest_sensitivity_mapper/cdc29ff211510150de82731f55ee2e7a8845b901?urlpath=lab%2Ftree%2FGUI.ipynb
 
 ## To install on your own machine
 
