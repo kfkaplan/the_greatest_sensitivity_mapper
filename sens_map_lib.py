@@ -494,32 +494,15 @@ class sky:
 
 			 #Combine data exptime and noise maps for all unique instances of Non
 			self.exptime += exptime_out
-			#self.data += data_out
 			inverse_variance = self.noise**-2
 			inverse_variance_out =  noise_out**-2
-			# goodpix = np.isfinite(inverse_variance_out) &&  np.isfinite(data_out)
-			# inverse_variance[badpix] = 0
-			# inverse_variance_out[badpix] = 0
-			# data_out[~np.isfinite(data_out)] = 0
 			sum_inverse_variance = inverse_variance + inverse_variance_out
 			data_times_inverse_variance = self.data * inverse_variance
 			data_out_times_inverse_variance_out = data_out * inverse_variance_out
-			goodpix = (sum_inverse_variance > 0.) & np.isfinite(data_times_inverse_variance) & np.isfinite(data_out_times_inverse_variance_out)
+			goodpix = (sum_inverse_variance > 0.) & np.isfinite(data_times_inverse_variance) & np.isfinite(data_out_times_inverse_variance_out) #Error catch
 
 
-			if np.any(np.isnan(self.data * inverse_variance)):
-				print('nans in self.data * inverse_variance for Non', unique_Non)
-				if np.any(np.isnan(self.data)):
-					print('nans in self.data')
-				if np.any(np.isnan(inverse_variance)):
-					print('nans in inverse_variance')
-			if np.any(np.isnan(data_out*inverse_variance_out)):
-				print('nans in data_out*inverse_variance_out for Non', unique_Non)
-				if np.any(np.isnan(data_out)):
-					print('nans in data_out')
-				if np.any(np.isnan(inverse_variance_out)):
-					print('nans in inverse_variance_out')
-
+			#Do a weighted sum for simulated data and noise
 			self.data[goodpix] = ((data_times_inverse_variance + data_out_times_inverse_variance_out) / sum_inverse_variance)[goodpix]
 			self.noise[goodpix] = (sum_inverse_variance[goodpix])**-0.5
 
